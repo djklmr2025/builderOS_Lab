@@ -1,5 +1,0 @@
-0x156A5B761D51B229a5c5532ab09e9a03d9775902
-
-Esa dirección que ves ahí es la pieza más importante de todo este proceso:
-
-Esa es la dirección oficial de tu contrato. Es el identificador único de tu token AEIO-MR_TOKEN en la red de pruebas. Guárdala en un lugar seguro. Con esa dirección, cualquiera en el mundo puede interactuar con tu token.

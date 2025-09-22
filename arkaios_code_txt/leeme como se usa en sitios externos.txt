@@ -1,9 +1,0 @@
-Cómo se usa en sitios externos:
-
-<script src="https://TU-DOMINIO/static/arkaios-widget.js"
-        data-ark-api="https://TU-DOMINIO"
-        data-ark-merchant="MERCHANT_123"
-        data-ark-amount="250"></script>
-
-
-El widget llama POST /api/pay/checkout en tu backend. Allí decides si cobras con Stripe/Bitso o si permites descuento por saldo Arkaios. Tras el webhook de éxito, acreditas a la cuenta o confirmas al merchant.

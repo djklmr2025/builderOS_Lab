@@ -1,3 +1,0 @@
-@echo off
-echo Iniciando entorno ARKAIOS...
-powershell -ExecutionPolicy Bypass -File "launch_arkaios.ps1"
