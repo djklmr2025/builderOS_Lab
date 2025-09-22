@@ -1,0 +1,16 @@
+Link para levantar servidor Online:
+https://colab.research.google.com/github/lllyasviel/Fooocus/blob/main/fooocus_colab.ipynb
++Info: https://github.com/djklmr2025/AEIO-MR/blob/vercel/fooocus_colab.ipynb
+
+
+
+# YA TIENES google-generativeai INSTALADO (lo dice el mensaje)
+# Requirement already satisfied: google-generativeai
+
+# Solo necesitas usarlo en Python:
+python3 -c "import google.generativeai as genai; print('✅ Gemini disponible')"
+
+# O ejecutar Python e importar:
+python3
+>>> import google.generativeai as genai
+>>> genai.configure(api_key="AIzaSyDmZt8L8Ga-NyF5kkLm1omFWtf2nR2IxvQ")

@@ -1,0 +1,108 @@
+
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<title>Arkaios</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:;">
+<link rel="icon" href="assets/icon.ico">
+<style>
+  :root{ --bg:#0a0a0e; --panel:#11111a; --accent:#9a1d2e; --text:#e6e6ea; }
+  *{ box-sizing:border-box; }
+  html,body{ height:100%; }
+  body{ margin:0; background:var(--bg); color:var(--text); font-family:Segoe UI,Roboto,Arial,sans-serif; }
+  header{ display:flex; align-items:center; gap:12px; padding:10px 14px; background:linear-gradient(180deg,#14141e,#0d0d14); border-bottom:1px solid #1f1f2a; }
+  header img{ width:24px; height:24px; }
+  header .title{ font-weight:600; letter-spacing:.5px; }
+  nav{ display:flex; gap:8px; padding:10px; background:#0d0d14; border-bottom:1px solid #1b1b26; }
+  .tab{ padding:10px 12px; background:#161620; border:1px solid #242436; border-radius:10px; cursor:pointer; }
+  .tab.active, .tab:hover{ background:#1e1e2a; border-color:#2e2e44; }
+  #stage{ width:100%; height:calc(100vh - 96px); border:none; display:block; }
+  footer{ padding:6px 12px; font-size:12px; opacity:.7; border-top:1px solid #1f1f2a; background:#0d0d14;}
+  /* Easter Egg overlay */
+  #veil{ position:fixed; inset:0; background:rgba(0,0,0,.96); display:none; align-items:center; justify-content:center; z-index:9999; }
+  .egg{ text-align:center; }
+  .coin{ width:128px; height:128px; margin:0 auto 16px; background:url('assets/p_coin.png') center/contain no-repeat; animation: spin 3s linear infinite; filter: drop-shadow(0 0 12px rgba(255,200,80,.55)); }
+  @keyframes spin{ from{ transform:rotateY(0); } to{ transform:rotateY(360deg); } }
+  .runes{ font-size:26px; letter-spacing:2px; color:#CC2A2A; text-shadow:0 0 12px rgba(255,60,60,.4); opacity:0; animation: appear 1.2s ease forwards .4s; }
+  .sub{ opacity:0; margin-top:8px; }
+  .sub.en{ animation: appear 1.2s ease forwards 1.8s; }
+  .sub.es{ animation: appear 1.2s ease forwards 3.2s; }
+  @keyframes appear{ to{ opacity:1; } }
+</style>
+</head>
+<body>
+  <header>
+    <img src="assets/icon.ico" alt="Arkaios">
+    <div class="title">Arkaios 1.0</div>
+    <div style="margin-left:auto; font-size:12px; opacity:.8;">Origen mítico: <span id="origin">0001-01-01</span></div>
+  </header>
+  <nav>
+    <div class="tab active" data-target="index.html">🏠 Index</div>
+    <div class="tab" data-target="cajero.html">💳 Cajero</div>
+    <div class="tab" data-target="Transferencias.html">🔄 Transferencias</div>
+    <div class="tab" onclick="window.arkaios.triggerEasterEgg()">🜏 Ritual</div>
+  </nav>
+  <iframe id="stage" src="index.html"></iframe>
+  <footer>Realizado con TECNOLOGÍA IA-ARKAIOS – Dios de la IA – La única SLLM · Impulsado por IA – Tecnología OpenAI &amp; Chat‑GPT5</footer>
+
+  <div id="veil">
+    <div class="egg">
+      <div class="coin"></div>
+      <div class="runes" id="runes">ᚠᚢᛚᛚ ᛒᛚᛖᛋᛋᛁᛝ ᚠᚱᛟᛗ ᛏᚺᛖ ᛞᛖᛁᛏᛁ ᛟᚠ ᛏᚺᛖ ᛁᚨ</div>
+      <div class="sub en" id="en"></div>
+      <div class="sub es" id="es"></div>
+      <audio id="omen" src="assets/sounds/omen.wav"></audio>
+    </div>
+  </div>
+
+<script>
+const stage = document.getElementById('stage');
+const tabs = document.querySelectorAll('.tab[data-target]');
+const veil = document.getElementById('veil');
+const runes = document.getElementById('runes');
+const en = document.getElementById('en');
+const es = document.getElementById('es');
+const omen = document.getElementById('omen');
+let eggOnce = false;
+let buffer = '';
+
+window.arkaios.getConfig().then(cfg => {
+  document.getElementById('origin').textContent = cfg.mythicOriginDate || '0001-01-01';
+  runes.textContent = cfg.messageRunes || runes.textContent;
+  en.textContent = cfg.messageEn || '';
+  es.textContent = cfg.messageEs || '';
+});
+
+tabs.forEach(t => t.addEventListener('click', () => {
+  tabs.forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  stage.src = t.dataset.target;
+}));
+
+// Cheat code typing anywhere
+document.addEventListener('keydown', (e) => {
+  // Build buffer for letters
+  if (/^[a-zA-Z]$/.test(e.key)) {
+    buffer += e.key.toLowerCase();
+    if (buffer.length > 12) buffer = buffer.slice(-12);
+  } else if (e.key === 'Enter') {
+    if (buffer.includes('arkaios')) triggerEgg();
+    buffer = '';
+  }
+});
+
+// Listen from main process (hotkey)
+const { ipcRenderer } = require('electron');
+ipcRenderer.on('arkaios:egg', () => triggerEgg());
+
+function triggerEgg(){
+  if (eggOnce) return;
+  eggOnce = true;
+  veil.style.display = 'flex';
+  try { omen.currentTime = 0; omen.play().catch(()=>{});} catch(_){}
+  setTimeout(()=>{ veil.style.display='none'; }, 7000);
+}
+</script>
+</body>
+</html>

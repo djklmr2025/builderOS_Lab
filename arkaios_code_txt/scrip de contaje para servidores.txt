@@ -1,0 +1,1 @@
+<script>window.ARK_SERVER="https://tu-dominio.com";</script>

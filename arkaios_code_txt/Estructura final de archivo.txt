@@ -1,0 +1,9 @@
+arkaios-system/
+├── index.html              (Núcleo actualizado - tu archivo base)
+├── transferencias.html (Módulo independiente de transferencias)
+├── android-connector.js    (Nuevo: Comunicación con app Android)
+├── terminal-caja.js        (Nuevo: Lógica específica para TPV)
+└── assets/
+    ├── qr-scanner.js       (Nuevo: Librería de escaneo QR)
+    └── arkaios-api.js      (Nuevo: API mínima para transferencias)
+    └── arkaios.js      (Lógica compartida)

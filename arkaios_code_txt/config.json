@@ -1,0 +1,16 @@
+{
+  "user": "djklmr",
+  "mode": "builder",
+  "entities": [
+    "ARKAIOS",
+    "Gemini",
+    "Puter",
+    "Copilot"
+  ],
+  "permissions": {
+    "puter": "superuser",
+    "copilot": "engineer",
+    "gemini": "observer",
+    "arkaios": "origin"
+  }
+}

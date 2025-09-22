@@ -1,0 +1,64 @@
+// static/arkaios-widget.js
+(function(){
+  const S = document.currentScript;
+  const API_BASE = S.dataset.arkApi || location.origin;
+  const merchant = S.dataset.arkMerchant || "MERCHANT_DEFAULT";
+  const amount = parseInt(S.dataset.arkAmount || "100", 10);
+
+  function btnStyles(el){ el.style.cssText="padding:10px 14px;border:0;border-radius:10px;background:#6e48aa;color:#fff;cursor:pointer;font-weight:600"; }
+  function openModal(onConfirm){
+    // carga CSS
+    const link = document.createElement("link");
+    link.rel="stylesheet"; link.href=(S.dataset.arkCss || (API_BASE+"/static/arkaios-widget.css"));
+    document.head.appendChild(link);
+
+    const back = document.createElement("div"); back.className="ark-modal-backdrop";
+    const m = document.createElement("div"); m.className="ark-modal";
+    m.innerHTML = `
+      <h3>Pago Arkaios</h3>
+      <p>Monto: <b>${amount}</b> AEIO-MR</p>
+      <label>Cuenta (.arkaios) o ID de cuenta:</label>
+      <input id="ark-acc" placeholder="ARK-XXXXXX o pega tu JSON firmado" />
+      <div class="ark-actions">
+        <button class="ark-btn" id="ark-cancel">Cancelar</button>
+        <button class="ark-btn primary" id="ark-ok">Continuar</button>
+      </div>`;
+    back.appendChild(m); document.body.appendChild(back);
+
+    m.querySelector("#ark-cancel").onclick=()=>document.body.removeChild(back);
+    m.querySelector("#ark-ok").onclick=()=>{
+      const v = m.querySelector("#ark-acc").value.trim();
+      document.body.removeChild(back);
+      onConfirm(v);
+    };
+  }
+
+  function mount(){
+    const btn = document.createElement("button");
+    btn.textContent = `Pagar ${amount} ARK`;
+    btnStyles(btn);
+    btn.onclick = ()=> openModal(async (accountInput)=>{
+      // 1) si viene JSON de cuenta, podrías parsearlo; si viene un ID, úsalo
+      let account_id = "";
+      try { const obj=JSON.parse(accountInput); account_id = obj.account_id || ""; } catch(e){ account_id = accountInput; }
+      if(!account_id){ alert("Proporciona un ID de cuenta válido"); return; }
+
+      // 2) inicia checkout en tu servidor (puede ser Stripe/Bitso o saldo directo)
+      const r = await fetch(API_BASE + "/api/pay/checkout", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({merchant, amount, account_id})
+      });
+      const data = await r.json();
+      if (data.checkout_url){
+        window.open(data.checkout_url, "_blank");
+      } else if (data.ok && data.debited){
+        alert("Pago realizado con saldo Arkaios.");
+      } else {
+        alert("No se pudo iniciar el pago.");
+      }
+    });
+    S.parentNode.insertBefore(btn, S.nextSibling);
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mount);
+  else mount();
+})();
