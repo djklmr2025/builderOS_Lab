@@ -1,4 +1,0 @@
-## Inserta tu token privado aquí
-"https://github.com/Arymusmeth/ARKAIOS-GENESIS-LOG/settings/secrets/actions
-
-Actions secrets and variables - ARKAIOS"
