@@ -1,0 +1,14 @@
+{
+  "nombre": "JOSE JUAN CASTEÑEDA ARRIAGA",
+  "usuario": "JJ",
+  "saldo": 10000,
+  "historial": [
+    "Creado: 5/8/2025, 2:33:14 a.m.",
+    "Modificación 2025-08-06T23:37:26.558Z",
+    "Nueva tarjeta generada: 8824-6711-0935-8775 - 6/8/2025, 5:50:00 p.m.",
+    "Modificación 2025-08-06T23:50:05.229Z"
+  ],
+  "tarjeta": "8824671109358775",
+  "dependencias": {},
+  "conexiones": []
+}

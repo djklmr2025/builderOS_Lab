@@ -1,0 +1,12 @@
+Credenciales por defecto:
+Humano:
+
+Usuario: admin
+
+Contraseña: admin123
+
+Token: TOKEN-DEMO
+
+IA Clave: ARKAIOS-AI-KEY-2023!@#
+
+NIP: 72AB58

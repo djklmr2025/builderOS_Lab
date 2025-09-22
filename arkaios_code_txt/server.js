@@ -1,0 +1,544 @@
+<script>
+    // Variables globales
+    const historyDiv = document.getElementById('history');
+    const input = document.getElementById('prompt');
+    const fileInput = document.getElementById('fileInput');
+    const previews = document.getElementById('previews');
+    const sendBtn = document.getElementById('sendBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const pingBtn = document.getElementById('pingBtn');
+    const cleanChatBtn = document.getElementById('cleanChat');
+    const statusEl = document.getElementById('connectionStatus');
+    const modelSelector = document.getElementById('modelSelector');
+    
+    let pendingFiles = [];
+    let isConnected = false;
+    let conversationHistory = [];
+    let puterReady = false;
+
+    // Esperar a que Puter.js se cargue
+    async function waitForPuter() {
+        let attempts = 0;
+        const maxAttempts = 30;
+        
+        while (attempts < maxAttempts) {
+            if (typeof puter !== 'undefined' && puter?.ai) {
+                puterReady = true;
+                return true;
+            }
+            attempts++;
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        return false;
+    }
+
+    // Funciones de estado de conexión
+    function updateConnectionStatus(ok) { 
+        isConnected = ok; 
+        statusEl.textContent = ok ? 'Conectado' : 'Error'; 
+        statusEl.className = 'status ' + (ok ? 'online' : 'offline'); 
+    }
+    
+    function setConnecting() { 
+        statusEl.textContent = 'Conectando...'; 
+        statusEl.className = 'status connecting'; 
+    }
+
+    // Añadir mensaje al historial
+    function addMessage({text, who = 'ai', attachments = [], isSystem = false}) {
+        const wrap = document.createElement('div');
+        let cls = `msg ${who}`; 
+        if (isSystem) cls += ' system';
+        wrap.className = cls;
+
+        const head = document.createElement('div');
+        head.className = 'head';
+        head.textContent = isSystem ? 'Sistema' : (who === 'user' ? 'Tú' : 'Arkaios (Claude)');
+
+        const body = document.createElement('div');
+        body.className = 'content';
+        body.textContent = text;
+
+        wrap.appendChild(head);
+        wrap.appendChild(body);
+
+        // Botón para guardar respuesta como archivo .txt
+        if (who === 'ai' && !isSystem && text.length > 20) {
+            const tools = document.createElement('div');
+            tools.className = 'tools';
+            const saveBtn = document.createElement('button');
+            saveBtn.className = 'btn';
+            saveBtn.textContent = '💾 Guardar (.txt)';
+            saveBtn.onclick = () => {
+                const blob = new Blob([text], {type: 'text/plain;charset=utf-8'});
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = `arkaios-respuesta-${Date.now()}.txt`;
+                a.click();
+                URL.revokeObjectURL(a.href);
+            };
+            tools.appendChild(saveBtn);
+            wrap.appendChild(tools);
+        }
+
+        // Mostrar archivos adjuntos
+        if (attachments?.length) {
+            const att = document.createElement('div'); 
+            att.className = 'attachments';
+            attachments.forEach(a => {
+                const box = document.createElement('div'); 
+                box.className = 'thumb';
+                if (a.type?.startsWith('image/')) {
+                    const img = new Image(); 
+                    img.alt = a.name; 
+                    img.src = a.preview || a.url;
+                    img.style.maxWidth = '120px';
+                    img.style.maxHeight = '80px';
+                    img.style.objectFit = 'cover';
+                    box.appendChild(img);
+                } else {
+                    const s = document.createElement('span'); 
+                    s.textContent = '📄 ' + (a.name || a.url); 
+                    box.appendChild(s);
+                }
+                att.appendChild(box);
+            });
+            wrap.appendChild(att);
+        }
+
+        historyDiv.appendChild(wrap);
+        historyDiv.scrollTop = historyDiv.scrollHeight;
+        return wrap;
+    }
+
+    // Mostrar previsualizaciones de archivos
+    function renderPreviews() {
+        previews.innerHTML = '';
+        pendingFiles.forEach((f, idx) => {
+            const box = document.createElement('div'); 
+            box.className = 'thumb'; 
+            box.style.position = 'relative';
+            
+            const x = document.createElement('button'); 
+            x.textContent = '×';
+            x.style.cssText = 'position:absolute;top:-8px;right:-8px;width:20px;height:20px;border-radius:50%;background:var(--danger);color:#fff;border:none;cursor:pointer;font-size:12px;line-height:1';
+            x.onclick = () => { 
+                if (f.preview) URL.revokeObjectURL(f.preview);
+                pendingFiles.splice(idx, 1); 
+                renderPreviews(); 
+            };
+
+            if (f.type.startsWith('image/')) {
+                const img = new Image(); 
+                img.alt = f.name; 
+                img.style.maxWidth = '80px'; 
+                img.style.maxHeight = '60px';
+                img.style.objectFit = 'cover';
+                box.appendChild(img);
+                
+                const rd = new FileReader(); 
+                rd.onload = e => {
+                    img.src = e.target.result;
+                    f.preview = e.target.result;
+                };
+                rd.readAsDataURL(f);
+            } else {
+                const s = document.createElement('span'); 
+                s.textContent = '📄 ' + f.name; 
+                s.style.maxWidth = '100px'; 
+                s.style.overflow = 'hidden'; 
+                s.style.textOverflow = 'ellipsis'; 
+                s.style.whiteSpace = 'nowrap'; 
+                box.appendChild(s);
+            }
+            box.appendChild(x); 
+            previews.appendChild(box);
+        });
+    }
+
+    // Manejo de archivos desde input
+    fileInput.addEventListener('change', e => {
+        const newFiles = Array.from(e.target.files).filter(f => {
+            if (f.size > 10 * 1024 * 1024) {
+                addMessage({text: `Archivo ${f.name} omitido (>10MB)`, who: 'ai', isSystem: true});
+                return false;
+            }
+            return true;
+        });
+        
+        pendingFiles = [...pendingFiles, ...newFiles]; 
+        renderPreviews(); 
+        e.target.value = '';
+    });
+    
+    clearBtn.addEventListener('click', () => { 
+        pendingFiles.forEach(f => {
+            if (f.preview) URL.revokeObjectURL(f.preview);
+        });
+        pendingFiles = []; 
+        renderPreviews(); 
+        fileInput.value = ''; 
+    });
+
+    // Drag & Drop
+    const drop = document.getElementById('drop');
+    ['dragenter', 'dragover'].forEach(ev => { 
+        drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('dragover'); }); 
+        document.addEventListener(ev, e => e.preventDefault()); 
+    });
+    
+    ['dragleave', 'drop'].forEach(ev => { 
+        drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('dragover'); }); 
+    });
+    
+    drop.addEventListener('drop', e => { 
+        const newFiles = Array.from(e.dataTransfer.files).filter(f => {
+            if (f.size > 10 * 1024 * 1024) {
+                addMessage({text: `Archivo ${f.name} omitido (>10MB)`, who: 'ai', isSystem: true});
+                return false;
+            }
+            return true;
+        });
+        
+        pendingFiles = [...pendingFiles, ...newFiles]; 
+        renderPreviews();
+    });
+
+    // Pegar imágenes con Ctrl+V
+    document.addEventListener('paste', async (e) => {
+        const items = e.clipboardData?.items || [];
+        let found = false;
+        for (const it of items) {
+            if (it.type && it.type.startsWith('image/')) {
+                const blob = it.getAsFile();
+                if (blob) {
+                    const file = new File([blob], `captura-${Date.now()}.png`, {type: blob.type});
+                    pendingFiles.push(file);
+                    found = true;
+                }
+            }
+        }
+        if (found) { 
+            renderPreviews(); 
+            addMessage({text: '📸 Imagen añadida desde portapapeles', who: 'ai', isSystem: true}); 
+        }
+    });
+
+    // Subir archivos a Puter (versión simplificada)
+    async function uploadFilesToPuter() {
+        if (!pendingFiles.length) return [];
+        if (!puterReady) {
+            addMessage({
+                text: '⚠️ Puter no está listo. Los archivos se conservarán localmente.',
+                who: 'ai', 
+                isSystem: true
+            });
+            return pendingFiles.map(f => ({
+                name: f.name,
+                type: f.type,
+                preview: f.preview,
+                local: true
+            }));
+        }
+        
+        const uploadedFiles = [];
+        
+        for (const file of pendingFiles) {
+            try {
+                // Método seguro para subir archivos
+                let puterFile;
+                if (puter.fs.upload) {
+                    puterFile = await puter.fs.upload(file);
+                } else {
+                    // Fallback: escribir manualmente
+                    const safeName = file.name.replace(/[^\w\.-]/g, '_');
+                    const path = `/home/${safeName}`;
+                    const arrayBuffer = await file.arrayBuffer();
+                    await puter.fs.write(path, new Uint8Array(arrayBuffer));
+                    puterFile = { path: path };
+                }
+                
+                // Obtener URL pública
+                let publicURL;
+                try {
+                    publicURL = await puter.fs.getPublicURL(puterFile.path);
+                } catch {
+                    publicURL = puterFile.path; // Fallback
+                }
+                
+                uploadedFiles.push({
+                    name: file.name,
+                    url: publicURL,
+                    type: file.type,
+                    preview: file.type.startsWith('image/') ? (file.preview || URL.createObjectURL(file)) : null
+                });
+                
+            } catch (error) {
+                console.error('Error subiendo archivo:', error);
+                addMessage({
+                    text: `❌ Error subiendo ${file.name}: ${error.message}`,
+                    who: 'ai', 
+                    isSystem: true
+                });
+                
+                // Conservar localmente
+                uploadedFiles.push({
+                    name: file.name,
+                    type: file.type,
+                    preview: file.preview,
+                    local: true,
+                    error: error.message
+                });
+            }
+        }
+        
+        return uploadedFiles;
+    }
+
+    // Función para procesar respuesta de Claude
+    function processAIResponse(response) {
+        if (typeof response === 'string') return response;
+        if (response?.message?.content) {
+            if (Array.isArray(response.message.content)) {
+                return response.message.content[0]?.text || response.message.content[0] || 'Respuesta vacía';
+            } else {
+                return response.message.content;
+            }
+        }
+        if (response?.text) return response.text;
+        if (response?.choices?.[0]?.message?.content) return response.choices[0].message.content;
+        
+        return 'Respuesta en formato no reconocido: ' + JSON.stringify(response).substring(0, 100);
+    }
+
+    // Función principal para enviar mensajes
+    async function send() {
+        const text = input.value.trim();
+        if (!text && pendingFiles.length === 0) return;
+        if (sendBtn.disabled || !puterReady) {
+            addMessage({
+                text: '⚠️ Sistema no está listo. Espera a que Puter se conecte.',
+                who: 'ai', 
+                isSystem: true
+            });
+            return;
+        }
+
+        // Mostrar mensaje localmente
+        const localPreview = [];
+        for (const f of pendingFiles) {
+            if (f.type.startsWith('image/')) {
+                try {
+                    const preview = await new Promise((resolve) => {
+                        const rd = new FileReader();
+                        rd.onload = e => resolve(e.target.result);
+                        rd.readAsDataURL(f);
+                    });
+                    localPreview.push({name: f.name, preview: preview, type: f.type});
+                } catch (err) {
+                    localPreview.push({name: f.name, type: f.type, error: err.message});
+                }
+            } else { 
+                localPreview.push({name: f.name, type: f.type}); 
+            }
+        }
+        
+        if (text || localPreview.length) {
+            addMessage({text: text || '(adjuntos)', who: 'user', attachments: localPreview});
+        }
+        
+        input.value = '';
+        sendBtn.disabled = true;
+        sendBtn.textContent = 'Enviando…';
+
+        try {
+            // 1. Subir archivos a Puter
+            const uploadedFiles = await uploadFilesToPuter();
+            
+            // 2. Construir mensaje completo
+            let fullMessage = text;
+            
+            if (uploadedFiles.length > 0) {
+                fullMessage += "\n\nArchivos adjuntos:";
+                uploadedFiles.forEach(file => {
+                    if (file.local) {
+                        fullMessage += `\n- ${file.name} (local, tipo: ${file.type})`;
+                    } else {
+                        fullMessage += `\n- ${file.name}: ${file.url}`;
+                    }
+                });
+            }
+            
+            // 3. Añadir al historial de conversación
+            conversationHistory.push({ role: "user", content: fullMessage });
+            
+            // 4. Seleccionar modelo
+            const selectedModel = modelSelector.value;
+            
+            // 5. Enviar mensaje a Claude
+            console.log('Enviando a modelo:', selectedModel);
+            const response = await puter.ai.chat(fullMessage, {
+                model: selectedModel,
+                stream: false
+            });
+            
+            // 6. Procesar respuesta
+            const aiResponse = processAIResponse(response);
+            
+            // 7. Añadir al historial
+            conversationHistory.push({ role: "assistant", content: aiResponse });
+            
+            // 8. Mostrar respuesta
+            updateConnectionStatus(true);
+            addMessage({
+                text: aiResponse,
+                who: 'ai',
+                attachments: uploadedFiles.filter(f => !f.error)
+            });
+
+            // 9. Mostrar errores si los hay
+            const errorFiles = uploadedFiles.filter(f => f.error);
+            if (errorFiles.length > 0) {
+                addMessage({
+                    text: `⚠️ Errores en ${errorFiles.length} archivo(s)`,
+                    who: 'ai', 
+                    isSystem: true
+                });
+            }
+
+        } catch (error) {
+            console.error('Error completo:', error);
+            updateConnectionStatus(false);
+            addMessage({
+                text: '❌ Error: ' + (error.message || 'Error desconocido') + 
+                      '\n\nVerifica tu conexión y que el modelo esté disponible.',
+                who: 'ai', 
+                isSystem: true
+            });
+        } finally {
+            sendBtn.disabled = false;
+            sendBtn.textContent = 'Enviar';
+            
+            // Limpiar archivos pendientes
+            pendingFiles.forEach(f => {
+                if (f.preview) URL.revokeObjectURL(f.preview);
+            });
+            pendingFiles = [];
+            renderPreviews();
+            fileInput.value = '';
+        }
+    }
+
+    // Limpiar chat
+    cleanChatBtn.addEventListener('click', () => {
+        if (!confirm('¿Borrar historial de conversación?')) return;
+        historyDiv.innerHTML = '';
+        conversationHistory = [];
+        addMessage({
+            text: '🧹 Conversación reiniciada. ¡Hola! Soy Arkaios con Claude. ¿En qué puedo ayudarte?',
+            who: 'ai', 
+            isSystem: true
+        });
+    });
+
+    // Probar conexión con Puter
+    pingBtn.addEventListener('click', async () => {
+        pingBtn.disabled = true;
+        pingBtn.textContent = 'Probando…';
+        setConnecting();
+        
+        try {
+            if (!puterReady) {
+                throw new Error('Puter.js no está cargado');
+            }
+            
+            // Probar con una consulta simple
+            const response = await puter.ai.chat("Responde solo: OK", {
+                model: "claude-3-7-sonnet",
+                stream: false
+            });
+            
+            const responseText = processAIResponse(response);
+            
+            updateConnectionStatus(true);
+            addMessage({
+                text: `✅ Conexión exitosa\nModelo: claude-3-7-sonnet\nRespuesta: ${responseText}`,
+                who: 'ai', 
+                isSystem: true
+            });
+            
+        } catch (error) {
+            updateConnectionStatus(false);
+            addMessage({
+                text: '❌ Error de conexión: ' + error.message,
+                who: 'ai', 
+                isSystem: true
+            });
+        } finally {
+            pingBtn.disabled = false;
+            pingBtn.textContent = 'Probar conexión';
+        }
+    });
+
+    // Event listeners
+    sendBtn.addEventListener('click', send);
+    input.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            send();
+        }
+    });
+
+    // Inicializar
+    async function init() {
+        setConnecting();
+        addMessage({
+            text: '🔄 Iniciando ARKAIOS... Conectando con Puter.js',
+            who: 'ai',
+            isSystem: true
+        });
+        
+        try {
+            // Esperar a que Puter.js se cargue
+            const puterAvailable = await waitForPuter();
+            
+            if (puterAvailable) {
+                puterReady = true;
+                updateConnectionStatus(true);
+                
+                addMessage({
+                    text: `✅ Sistema ARKAIOS iniciado correctamente
+
+¡Hola! Soy tu asistente con Claude a través de Puter.js.
+
+Puedes:
+• Escribir preguntas y mensajes
+• Adjuntar imágenes y archivos (drag & drop o Ctrl+V)
+• Seleccionar diferentes modelos de Claude
+• Usar el botón "Probar conexión" para verificar
+
+¿En qué puedo ayudarte hoy?`,
+                    who: 'ai'
+                });
+                
+            } else {
+                throw new Error('Puter.js no se cargó después de 3 segundos');
+            }
+        } catch (error) {
+            updateConnectionStatus(false);
+            addMessage({
+                text: `❌ Error crítico: ${error.message}
+
+Posibles soluciones:
+1. Recarga la página (F5)
+2. Verifica tu conexión a internet
+3. Asegúrate de que https://js.puter.com esté accesible`,
+                who: 'ai', 
+                isSystem: true
+            });
+        }
+    }
+    
+    // Iniciar cuando la página cargue
+    window.addEventListener('load', init);
+</script>

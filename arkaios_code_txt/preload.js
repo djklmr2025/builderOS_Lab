@@ -1,0 +1,10 @@
+
+const { contextBridge, ipcRenderer } = require('electron');
+
+contextBridge.exposeInMainWorld('arkaios', {
+  validateLicense: (key) => ipcRenderer.invoke('arkaios:validateLicense', key),
+  getConfig: () => ipcRenderer.invoke('arkaios:getConfig'),
+  hasValidLicense: () => ipcRenderer.invoke('arkaios:hasValidLicense'),
+  getAppMeta: () => ipcRenderer.invoke('arkaios:getAppMeta'),
+  triggerEasterEgg: () => ipcRenderer.invoke('arkaios:triggerEasterEgg')
+});

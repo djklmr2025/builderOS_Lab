@@ -1,0 +1,7 @@
+cd C:\repos\arkaios-genesis-log
+git init
+git checkout -b main
+git remote add origin https://Arymusmeth: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@github.com/Arymusmeth/arkaios-genesis-log.git
+git add .
+git commit -m "🔖 ARKAIOS génesis – manifiesto inicial" --author="Arkaios Bot <arkaios@localhost>"
+git push -u origin main
