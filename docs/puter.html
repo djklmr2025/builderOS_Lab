@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="es">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>ARKAIOS Puter Console</title>
+<style>
+  body{font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:920px;margin:2rem auto;padding:0 1rem;}
+  .row{display:flex;gap:.75rem;align-items:center;flex-wrap:wrap}
+  textarea{width:100%;min-height:90px;padding:.75rem;font-size:1rem}
+  #out{border:1px solid #ddd; min-height:220px; padding:1rem; white-space:pre-wrap; background:#fafafa}
+  select,input[type="text"]{padding:.5rem;font-size:1rem}
+  button{padding:.6rem 1rem;font-size:1rem;cursor:pointer}
+  small{color:#666}
+  details{margin:.5rem 0}
+</style>
+<h1>ARKAIOS / Puter Console</h1>
+<p>Prueba rápida del laboratorio: chat Puter, streaming, y carga de <code>index.json</code> del repositorio.</p>
+
+<div class="row">
+  <label>Modelo:</label>
+  <select id="model">
+    <option>gpt-5-nano</option>
+    <option>gpt-4o-mini</option>
+    <option>gpt-3.5-turbo</option>
+  </select>
+  <label><input type="checkbox" id="stream" checked> Streaming</label>
+</div>
+
+<textarea id="prompt" placeholder="Escribe tu mensaje para Puter..."></textarea>
+<div class="row">
+  <button id="send">Enviar ▶</button>
+  <input id="indexUrl" type="text" placeholder="URL de index.json (opcional)" style="flex:1" />
+  <button id="loadIndex">Cargar índice</button>
+</div>
+
+<details>
+  <summary>Ayuda</summary>
+  <small>
+  - Si publicas esto en GitHub Pages, deja el campo "URL de index.json" vacío y el visor intentará cargar <code>index.json</code> desde la misma ruta.<br/>
+  - No coloques secretos en páginas públicas. Para operaciones privilegiadas usa el Gateway A.I.D.A. del backend.
+  </small>
+</details>
+
+<div class="row" id="gw-row">
+  <input id="gwUrl" type="text" placeholder="Gateway URL (p. ej., https://<codespace>-8080.app.github.dev/aida/gateway)" style="flex:1" />
+  <button id="gwPing">Ping Gateway (plan)</button>
+</div>
+
+<div id="out"></div>
+
+<script src="https://js.puter.com/v2/"></script>
+<script>
+const out = document.getElementById('out');
+const promptEl = document.getElementById('prompt');
+const sendBtn = document.getElementById('send');
+const modelSel = document.getElementById('model');
+const streamChk = document.getElementById('stream');
+const indexUrl = document.getElementById('indexUrl');
+const loadBtn = document.getElementById('loadIndex');
+
+function print(line){
+  out.textContent += line;
+}
+function println(line=""){
+  out.textContent += line + "\n";
+}
+async function send(){
+  const text = promptEl.value.trim();
+  if(!text){ return; }
+  out.textContent = "";
+  const model = modelSel.value;
+  const doStream = streamChk.checked;
+  try{
+    if(doStream){
+      const resp = await puter.ai.chat(text, {stream:true, model});
+      for await (const part of resp){
+        if(part && part.text){ print(part.text); }
+      }
+      println();
+    }else{
+      const resp = await puter.ai.chat(text, {model});
+      println(resp.text || JSON.stringify(resp));
+    }
+  }catch(e){
+    println("⚠️ Error: " + (e?.message || e));
+  }
+}
+sendBtn.onclick = send;
+
+async function loadIndex(){
+  const url = (indexUrl.value || "index.json");
+  try{
+    const r = await fetch(url);
+    const idx = await r.json();
+    const counts = (idx.collections||[]).map(c => `${c.name}=${(c.entries||[]).length}`).join(", ");
+    println("Índice cargado: " + counts);
+    println("Ejemplo: resume 'arkaios_text_for_copilot/ARKAIOS_SUMMARY.txt' y luego genera un plan de pruebas.");
+    promptEl.value = "Usa el índice cargado para comprender ARKAIOS. Resume los docs base y sugiere pruebas.";
+  }catch(e){
+    println("⚠️ No pude leer el índice ("+url+"): " + (e?.message||e));
+  }
+}
+loadBtn.onclick = loadIndex;
+</script>
+</html>
