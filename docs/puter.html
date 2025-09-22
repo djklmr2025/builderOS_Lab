@@ -42,7 +42,7 @@
 </details>
 
 <div class="row" id="gw-row">
-  <input id="gwUrl" type="text" placeholder="Gateway URL (p. ej., https://<codespace>-8080.app.github.dev/aida/gateway)" style="flex:1" />
+  <input id="gwUrl" type="text" placeholder="Gateway URL (p. ej., https://<codespace value="https://arkaios-gateway-open.onrender.com/aida/gateway">-8080.app.github.dev/aida/gateway)" style="flex:1" />
   <button id="gwPing">Ping Gateway (plan)</button>
 </div>
 
@@ -101,5 +101,17 @@ async function loadIndex(){
   }
 }
 loadBtn.onclick = loadIndex;
+</script>
+<script>
+(function(){
+  const el = document.getElementById('gwUrl');
+  try{
+    const saved = localStorage.getItem('gwUrl');
+    if(el){
+      if(saved){ el.value = saved; } else { localStorage.setItem('gwUrl', el.value || 'https://arkaios-gateway-open.onrender.com/aida/gateway'); }
+      el.addEventListener('change', ()=> localStorage.setItem('gwUrl', el.value.trim()));
+    }
+  }catch(e){}
+})();
 </script>
 </html>
