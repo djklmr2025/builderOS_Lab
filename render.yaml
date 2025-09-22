@@ -9,6 +9,8 @@ services:
     healthCheckPath: /aida/health
     autoDeploy: true
     envVars:
+      - key: RATE_LIMIT
+        value: "0"
       - key: RENDER_NODE_VERSION
         value: "20"          # fuerza Node 20
       - key: OPEN_MODE
