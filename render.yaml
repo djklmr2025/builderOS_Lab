@@ -1,23 +1,24 @@
 services:
   - type: web
     name: arkaios-gateway-open
-    env: node                 # entorno Node administrado por Render
-    plan: free                # usa "starter" si quieres 24/7 sin dormir
+    env: node
+    plan: free
+    region: oregon
+
+    # 👇 muy importante: Render hará build/start dentro de esta carpeta
     rootDir: arkaios_gateway/server
+
     buildCommand: npm ci --omit=dev
     startCommand: node gateway.js
     healthCheckPath: /aida/health
     autoDeploy: true
+
     envVars:
-      - key: RATE_LIMIT
-        value: "0"
       - key: RENDER_NODE_VERSION
-        value: "20"          # fuerza Node 20
+        value: "20"
       - key: OPEN_MODE
         value: "1"
-      - key: PUBLIC_ACTIONS
-        value: "echo,plan,analyze,explain,generate"
+      - key: RATE_LIMIT
+        value: "0"
       - key: ALLOW_ORIGIN
         value: "https://djklmr2025.github.io"
-      - key: UNIQUE_PATH_TOKEN
-        generateValue: true
