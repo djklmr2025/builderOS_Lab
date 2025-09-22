@@ -1,0 +1,12 @@
+Problemas conocidos
+
+- Proxy recorta streams:
+  -> Aumentar proxy_read_timeout / keepalive / buffers.
+- CORS/CSP estrictas:
+  -> Añadir js.puter.com a script-src/connect-src. Si no se puede, usar bridge backend.
+- Desfase de tokens:
+  -> Sincronizar valores entre cliente y servidor; evitar hardcodear en UI.
+- Latencia alta en generación:
+  -> Usar colas/worker y respuestas streaming para feedback inmediato.
+- Permisos FS denegados:
+  -> Asegurar que el usuario/contendor tenga RW en STORAGE_URI.

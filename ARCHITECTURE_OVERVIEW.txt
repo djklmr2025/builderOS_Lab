@@ -1,0 +1,25 @@
+Vista textual de arquitectura
+
+[Cliente/IA] 
+  ↕ HTTPS (ruta única /arkaios/<token>)
+[Reverse Proxy/Nginx/Caddy]
+  ↕ HTTP interno
+[Gateway Backend (Node/Express o Python/Flask)]
+  ├─ /aida/health, /aida/gateway  -> Servicio A.I.D.A.
+  ├─ /puter/api                   -> Puter agent bridge
+  └─ /internal/*                  -> Endpoints internos
+[Servicios]
+  ├─ A.I.D.A. (valida, enruta, aplica políticas)
+  ├─ Puter Agent (chat/txt2img/stream/file ops)
+  ├─ Storage (S3/FS) con control de acceso
+  └─ Auditoría/Logs centralizados
+
+Diagrama de datos (resumen)
+Solicitud (payload + Authorization) -> Gateway -> A.I.D.A. valida ->
+   Si aprobado: delega en Puter Agent o Workers -> escribe/lee en Storage ->
+   Devuelve respuesta al Gateway -> Cliente.
+
+Puntos críticos
+- Tokens y cabeceras deben atravesar el reverse proxy intactos.
+- WebSocket/stream requiere timeouts amplios en proxy.
+- CORS/ CSP correctos si hay UI web.

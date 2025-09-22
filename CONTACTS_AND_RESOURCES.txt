@@ -1,0 +1,10 @@
+Responsable humano: djklmr (agente de ARKAIOS)
+
+Documentación clave sugerida:
+- Puter.js (tutoriales/enciclopedia/modelos soportados y streaming)
+- Notas internas de A.I.D.A. (este paquete y el repo original)
+
+Siguientes pasos:
+- Generar stubs a partir de estos .txt
+- Automatizar extracción de .py/.html a .txt para revisión por Copilot
+- Probar integración puter (chat/stream/txt2img) y validar ruta única expuesta
