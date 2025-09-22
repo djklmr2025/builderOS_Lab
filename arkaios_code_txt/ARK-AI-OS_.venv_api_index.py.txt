@@ -1,0 +1,7 @@
+ORIGINAL FILE: ARK-AI-OS/.venv/api/index.py
+--- BEGIN CONTENT ---
+from server_arkaios import app
+
+if __name__ == '__main__':
+    app.run()
+--- END CONTENT ---

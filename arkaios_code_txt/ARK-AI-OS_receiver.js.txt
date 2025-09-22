@@ -1,0 +1,6 @@
+ORIGINAL FILE: ARK-AI-OS/receiver.js
+--- BEGIN CONTENT ---
+console.log(" Receiver funcionando correctamente");
+const http = require('http');
+console.log("Módulos cargados exitosamente");
+--- END CONTENT ---

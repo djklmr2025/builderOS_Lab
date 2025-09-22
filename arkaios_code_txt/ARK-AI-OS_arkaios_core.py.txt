@@ -1,0 +1,7 @@
+ORIGINAL FILE: ARK-AI-OS/arkaios_core.py
+--- BEGIN CONTENT ---
+#! /usr/bin/env python3
+# Núcleo mínimo de ARKAIOS – placeholder
+print('ARKAIOS core placeholder')
+
+--- END CONTENT ---

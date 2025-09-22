@@ -1,0 +1,25 @@
+ORIGINAL FILE: ARK-AI-OS/db.py
+--- BEGIN CONTENT ---
+# db.py
+import sqlite3, json, os, time
+DB_PATH = os.getenv("ARKAIOS_DB", "arkaios.db")
+
+def get_conn():
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def init_db():
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.executescript(open("schema.sql","r",encoding="utf-8").read())
+    conn.commit()
+    conn.close()
+
+def row_to_dict(r):
+    return {k: r[k] for k in r.keys()}
+
+def now_ts():
+    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+--- END CONTENT ---

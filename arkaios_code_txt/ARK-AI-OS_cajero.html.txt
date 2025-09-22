@@ -1,0 +1,837 @@
+ORIGINAL FILE: ARK-AI-OS/cajero.html
+--- BEGIN CONTENT ---
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ARKAIOS - Sistema de Canje</title>
+  <style>
+    :root {
+      --primary: #6e48aa;
+      --secondary: #9d50bb;
+      --dark: #1e0033;
+      --light: #f4f4f4;
+      --success: #28a745;
+      --danger: #dc3545;
+      --warning: #ffc107;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, var(--dark), var(--primary));
+      color: var(--light);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    .auth-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .auth-box {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      padding: 30px;
+      width: 100%;
+      max-width: 500px;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      text-align: center;
+    }
+
+    .auth-box h1 {
+      margin-bottom: 20px;
+      color: white;
+    }
+
+    .auth-box input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 8px;
+      border: none;
+      background: rgba(0, 0, 0, 0.3);
+      color: white;
+      font-size: 16px;
+    }
+
+    .auth-box button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      border-radius: 8px;
+      border: none;
+      background: linear-gradient(to right, var(--primary), var(--secondary));
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .app-container {
+      display: none;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 0;
+      margin-bottom: 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logout-btn {
+      background: var(--danger);
+      padding: 8px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .tab-container {
+      display: flex;
+      margin-bottom: 20px;
+    }
+
+    .tab {
+      padding: 10px 20px;
+      cursor: pointer;
+      background: rgba(255,255,255,0.1);
+      border-radius: 5px 5px 0 0;
+      margin-right: 5px;
+    }
+
+    .tab.active {
+      background: white;
+      color: var(--primary);
+      font-weight: bold;
+    }
+
+    .module-container {
+      background: white;
+      color: #333;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .module-container.active {
+      display: block;
+    }
+
+    .module-title {
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+      color: var(--primary);
+      border-bottom: 2px solid var(--primary);
+      padding-bottom: 10px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+
+    .btn {
+      padding: 10px 15px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-right: 10px;
+      margin-bottom: 10px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background-color: #4CAF50;
+      color: white;
+    }
+
+    .btn-warning {
+      background-color: var(--warning);
+      color: #333;
+    }
+
+    .btn-danger {
+      background-color: var(--danger);
+      color: white;
+    }
+
+    .data-viewer {
+      background: #f8f9fa;
+      border-radius: 6px;
+      padding: 15px;
+      margin-top: 15px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .status {
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 8px;
+      text-align: center;
+      display: none;
+    }
+
+    .status-success {
+      background: rgba(40, 167, 69, 0.2);
+      border: 1px solid var(--success);
+    }
+
+    .status-error {
+      background: rgba(220, 53, 69, 0.2);
+      border: 1px solid var(--danger);
+    }
+
+    .account-card {
+      background: linear-gradient(135deg, #2b5876, #4e4376);
+      color: white;
+      padding: 15px;
+      border-radius: 10px;
+      margin: 15px 0;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .account-info {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .account-info p {
+      margin: 5px 0;
+    }
+
+    .code-info {
+      background: linear-gradient(135deg, #3a7bd5, #00d2ff);
+      color: white;
+      padding: 15px;
+      border-radius: 10px;
+      margin: 15px 0;
+      text-align: center;
+    }
+
+    @media (max-width: 768px) {
+      .account-info {
+        grid-template-columns: 1fr;
+      }
+      
+      .tab-container {
+        flex-direction: column;
+      }
+      
+      .tab {
+        border-radius: 5px;
+        margin-bottom: 5px;
+      }
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+</head>
+<body>
+  <!-- Pantalla de Autenticacion -->
+  <div class="auth-container" id="authScreen">
+    <div class="auth-box">
+      <div class="auth-logo">🔐 ARKAIOS</div>
+      <h1>Autenticacion</h1>
+      <input type="password" id="pinInput" placeholder="Ingrese su PIN">
+      <button onclick="login()">Acceder al Sistema</button>
+      <p id="loginMessage" style="color: var(--danger); margin-top: 10px; display: none;"></p>
+    </div>
+  </div>
+
+  <!-- Aplicacion Principal -->
+  <div class="app-container" id="appScreen">
+    <header>
+      <h1>ARKAIOS - Sistema de Canje</h1>
+      <div class="user-info">
+        <span id="loggedUser">Administrador</span>
+        <span class="logout-btn" onclick="logout()">Cerrar Sesion</span>
+      </div>
+    </header>
+
+    <div id="statusMessage" class="status"></div>
+
+    <div class="tab-container">
+      <div class="tab active" onclick="switchTab('redeem')">Canje de Codigos</div>
+      <div class="tab" onclick="switchTab('codes')">Base de Codigos</div>
+    </div>
+
+    <!-- Modulo de Canje -->
+    <div class="module-container tab-content active" id="redeemTab">
+      <div class="module-title">💳 Canje de Codigos</div>
+      
+      <div class="form-group">
+        <label>Cargar cuenta existente (.arkaios):</label>
+        <input type="file" id="accountFile" accept=".arkaios">
+        <button class="btn btn-primary" onclick="loadAccountFile()">Cargar Archivo</button>
+      </div>
+      
+      <div class="form-group">
+        <label>Codigo de canje (16 digitos):</label>
+        <input type="text" id="redeemCode" placeholder="Ej: ARK100K3UNSW9YU3">
+        <button class="btn btn-primary" onclick="validateCode()">Validar Codigo</button>
+      </div>
+      
+      <div class="code-info" id="codeInfo" style="display: none;">
+        <div>Informacion del Codigo</div>
+        <div style="font-size: 1.2rem; margin: 10px 0; color: var(--warning);" id="codeAmount">Cantidad: 0 AEIO-MR</div>
+        <div id="codeExpiration">Valido hasta: --/--/----</div>
+        <button class="btn btn-primary" onclick="redeemCode()" id="redeemBtn">Canjear Codigo</button>
+      </div>
+      
+      <div class="account-card">
+        <h3>Cuenta Actual</h3>
+        <div id="currentAccountInfo" class="account-info"></div>
+        <button class="btn btn-primary" onclick="saveAccount()">Guardar Cambios</button>
+        <button class="btn btn-danger" onclick="clearAccount()">Liberar Cuenta</button>
+      </div>
+      
+      <div class="data-viewer">
+        <h3>Historial de Canjes</h3>
+        <div id="redeemHistory"></div>
+      </div>
+      
+      <div class="data-viewer">
+        <h3>Todas las Cuentas Cargadas</h3>
+        <div id="allAccountsList"></div>
+      </div>
+    </div>
+
+    <!-- Modulo de Codigos -->
+    <div class="module-container tab-content" id="codesTab">
+      <div class="module-title">🔢 Base de Codigos</div>
+      
+      <div class="form-group">
+        <label>Generar nuevos codigos:</label>
+        <input type="number" id="codeAmount" placeholder="Cantidad" min="1" value="1">
+        <input type="number" id="codeValue" placeholder="Valor en AEIO-MR" min="10" value="100">
+        <input type="date" id="codeExpiry">
+        <button class="btn btn-primary" onclick="generateCodes()">Generar Codigos</button>
+      </div>
+      
+      <div class="data-viewer">
+        <h3>Codigos Disponibles</h3>
+        <div id="availableCodes"></div>
+      </div>
+      
+      <div class="data-viewer">
+        <h3>Codigos Usados</h3>
+        <div id="usedCodes"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =============================================
+    // Configuracion del Sistema
+    // =============================================
+    const FIXED_ENCRYPTION_KEY = "ARKAIOS_SECURE_KEY_2023!@#";
+    const SYSTEM_PIN = "ARKAIOS2023";
+    let currentUser = null;
+    let currentAccount = null;
+    let accounts = [];
+    let codeDatabase = {
+      available: {},
+      used: {}
+    };
+    let fileHandle = null; // Para manejar el archivo actual
+
+    // =============================================
+    // Funciones de Cifrado/Descifrado (Compatibles con index.html)
+    // =============================================
+    function encryptAccountData(accountData) {
+      try {
+        const jsonData = JSON.stringify(accountData);
+        return CryptoJS.AES.encrypt(jsonData, FIXED_ENCRYPTION_KEY).toString();
+      } catch (err) {
+        console.error('Error al cifrar:', err);
+        showStatus('Error al cifrar cuenta: ' + err.message, 'error');
+        return null;
+      }
+    }
+
+    function decryptAccountData(encryptedData) {
+      try {
+        // Detectar si es un archivo JSON sin cifrar (para retrocompatibilidad)
+        if (encryptedData.trim().startsWith('{')) {
+          const accountData = JSON.parse(encryptedData);
+          showStatus('Cuenta cargada (formato sin cifrar)', 'warning');
+          return accountData;
+        }
+        
+        const bytes = CryptoJS.AES.decrypt(encryptedData, FIXED_ENCRYPTION_KEY);
+        const plaintext = bytes.toString(CryptoJS.enc.Utf8);
+        
+        if (!plaintext) {
+          throw new Error('Archivo cifrado no válido o clave incorrecta');
+        }
+        
+        return JSON.parse(plaintext);
+      } catch (err) {
+        console.error('Descifrado fallido:', err);
+        showStatus('Error al descifrar cuenta: ' + err.message, 'error');
+        return null;
+      }
+    }
+
+    // =============================================
+    // Datos Iniciales
+    // =============================================
+    function loadInitialData() {
+      // Cargar base de codigos de ejemplo
+      codeDatabase.available = {
+        'ARK100K3UNSW9YU3': { amount: 100, expires: '2026-12-31' },
+        'ARK250ABCDEF12345': { amount: 250, expires: '2026-12-31' },
+        'ARK500XYZ98765432': { amount: 500, expires: '2026-12-31' }
+      };
+      
+      updateUI();
+    }
+
+    // =============================================
+    // Autenticacion
+    // =============================================
+    function login() {
+      const pin = document.getElementById('pinInput').value;
+      const loginMessage = document.getElementById('loginMessage');
+
+      if (pin === SYSTEM_PIN) {
+        currentUser = { name: "Administrador", role: "admin" };
+        document.getElementById('authScreen').style.display = 'none';
+        document.getElementById('appScreen').style.display = 'block';
+        document.getElementById('loggedUser').textContent = currentUser.name;
+        
+        loadInitialData();
+        showStatus("Bienvenido al sistema ARKAIOS", "success");
+      } else {
+        loginMessage.textContent = 'PIN incorrecto';
+        loginMessage.style.display = 'block';
+      }
+    }
+
+    function logout() {
+      currentUser = null;
+      currentAccount = null;
+      accounts = [];
+      fileHandle = null;
+      document.getElementById('authScreen').style.display = 'flex';
+      document.getElementById('appScreen').style.display = 'none';
+      document.getElementById('pinInput').value = '';
+      document.getElementById('loginMessage').style.display = 'none';
+    }
+
+    // =============================================
+    // Funciones de Interfaz
+    // =============================================
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+      
+      document.querySelector(`.tab[onclick="switchTab('${tabId}')"]`).classList.add('active');
+      document.getElementById(`${tabId}Tab`).classList.add('active');
+    }
+
+    function showStatus(message, type = 'success') {
+      const statusDiv = document.getElementById('statusMessage');
+      statusDiv.textContent = message;
+      statusDiv.className = `status status-${type}`;
+      statusDiv.style.display = 'block';
+      
+      setTimeout(() => {
+        statusDiv.style.display = 'none';
+      }, 5000);
+    }
+
+    function updateUI() {
+      updateAccountInfo();
+      updateAllAccountsList();
+      updateCodeLists();
+    }
+
+    // =============================================
+    // Gestion de Cuentas (Compatible con index.html)
+    // =============================================
+    async function saveAccount() {
+      if (!currentAccount) {
+        showStatus("No hay cuenta seleccionada", "error");
+        return;
+      }
+
+      // Actualizar metadatos
+      currentAccount.metadata = currentAccount.metadata || {};
+      currentAccount.metadata.lastModified = new Date().toISOString();
+      currentAccount.metadata.modifiedBy = currentUser.name;
+      
+      // Cifrar los datos de la cuenta
+      const encryptedData = encryptAccountData(currentAccount);
+      if (!encryptedData) return;
+
+      try {
+        // Intentar guardar en el archivo original si existe
+        if (fileHandle) {
+          const writable = await fileHandle.createWritable();
+          await writable.write(encryptedData);
+          await writable.close();
+          showStatus("Archivo actualizado correctamente", "success");
+        } else {
+          // Descargar como nuevo archivo si no hay handle
+          const blob = new Blob([encryptedData], { type: 'application/octet-stream' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `ARK_${currentAccount.id}_${Date.now()}.arkaios`;
+          a.click();
+          showStatus("Cuenta guardada como nuevo archivo", "success");
+        }
+      } catch (error) {
+        console.error("Error al guardar:", error);
+        showStatus("Error al guardar: " + error.message, "error");
+      }
+    }
+
+    function clearAccount() {
+      currentAccount = null;
+      fileHandle = null;
+      showStatus("Cuenta liberada", "success");
+      updateUI();
+    }
+
+    async function loadAccountFile() {
+      const fileInput = document.getElementById('accountFile');
+      const file = fileInput.files[0];
+      
+      if (!file) {
+        showStatus("Seleccione un archivo primero", "error");
+        return;
+      }
+
+      try {
+        // Intentar obtener permisos de escritura si es posible
+        if ('showOpenFilePicker' in window) {
+          try {
+            fileHandle = await window.showOpenFilePicker({
+              types: [{
+                description: 'ARKAIOS Account Files',
+                accept: {'application/octet-stream': ['.arkaios']}
+              }],
+              multiple: false
+            }).then(handles => handles[0]);
+          } catch (error) {
+            console.log("Modo solo lectura. Error al obtener permisos:", error);
+            fileHandle = null;
+          }
+        }
+
+        const fileContent = await file.text();
+        const accountData = decryptAccountData(fileContent);
+        
+        if (!accountData) {
+          throw new Error("No se pudo descifrar el archivo");
+        }
+
+        // Normalizar estructura de cuenta para compatibilidad
+        const normalizedAccount = normalizeAccountStructure(accountData);
+        
+        // Actualizar o agregar cuenta
+        const existingIndex = accounts.findIndex(acc => acc.id === normalizedAccount.id);
+        if (existingIndex >= 0) {
+          accounts[existingIndex] = normalizedAccount;
+          showStatus(`Cuenta ${normalizedAccount.id} actualizada`, "success");
+        } else {
+          accounts.push(normalizedAccount);
+          showStatus(`Nueva cuenta ${normalizedAccount.id} cargada`, "success");
+        }
+        
+        currentAccount = normalizedAccount;
+        fileInput.value = ''; // Limpiar el input de archivo
+        updateUI();
+        
+      } catch (error) {
+        console.error("Error al procesar archivo:", error);
+        showStatus(`Error: ${error.message}`, "error");
+      }
+    }
+
+    function normalizeAccountStructure(accountData) {
+      // Convertir cuenta a estructura compatible con index.html
+      return {
+        id: accountData.id || `ARK-${Date.now().toString().slice(-6)}`,
+        nombre: accountData.nombre || accountData.name || 'Sin nombre',
+        usuario: accountData.usuario || accountData.username || 'sin-usuario',
+        saldo: accountData.saldo || accountData.balance || 0,
+        tarjeta: accountData.tarjeta || accountData.cardNumber || generateCardNumber(),
+        historial: accountData.historial || accountData.history || [],
+        movimientos: accountData.movimientos || [],
+        metadata: accountData.metadata || {
+          created: new Date().toISOString(),
+          lastModified: new Date().toISOString(),
+          createdBy: currentUser.name
+        }
+      };
+    }
+
+    function generateCardNumber() {
+      let num = '';
+      for (let i = 0; i < 16; i++) {
+        num += Math.floor(Math.random() * 10);
+        if ((i + 1) % 4 === 0 && i !== 15) num += ' ';
+      }
+      return num;
+    }
+
+    function updateAccountInfo() {
+      const infoDiv = document.getElementById('currentAccountInfo');
+      
+      if (!currentAccount) {
+        infoDiv.innerHTML = "<p>No hay cuenta seleccionada</p>";
+        return;
+      }
+      
+      let html = `
+        <p><strong>ID:</strong> ${currentAccount.id}</p>
+        <p><strong>Titular:</strong> ${currentAccount.nombre}</p>
+        <p><strong>Usuario:</strong> ${currentAccount.usuario}</p>
+        <p><strong>Saldo:</strong> ${currentAccount.saldo} AEIO-MR</p>
+        <p><strong>Tarjeta:</strong> ${formatCardNumber(currentAccount.tarjeta)}</p>
+        <p><strong>Creada:</strong> ${new Date(currentAccount.metadata.created).toLocaleDateString()}</p>
+        <p><strong>Modificada:</strong> ${new Date(currentAccount.metadata.lastModified).toLocaleDateString()}</p>
+      `;
+      
+      infoDiv.innerHTML = html;
+    }
+
+    function formatCardNumber(number) {
+      if (!number) return '•••• •••• •••• ••••';
+      const cleanNumber = number.toString().replace(/\D/g, '');
+      return cleanNumber.replace(/(\d{4})(?=\d)/g, '$1 ');
+    }
+
+    function updateAllAccountsList() {
+      const listDiv = document.getElementById('allAccountsList');
+      listDiv.innerHTML = '';
+      
+      if (accounts.length === 0) {
+        listDiv.innerHTML = "<p>No hay cuentas cargadas</p>";
+        return;
+      }
+      
+      accounts.forEach(account => {
+        const accountDiv = document.createElement('div');
+        accountDiv.style.padding = "10px";
+        accountDiv.style.borderBottom = "1px solid #eee";
+        accountDiv.style.cursor = "pointer";
+        
+        accountDiv.innerHTML = `
+          <strong>${account.nombre}</strong> (${account.id})
+          <div>Usuario: ${account.usuario}</div>
+          <div>Saldo: ${account.saldo} AEIO-MR</div>
+          <div>Tarjeta: ${formatCardNumber(account.tarjeta)}</div>
+        `;
+        
+        accountDiv.onclick = () => {
+          currentAccount = account;
+          updateUI();
+          showStatus(`Cuenta ${account.nombre} seleccionada`, "success");
+        };
+        
+        listDiv.appendChild(accountDiv);
+      });
+    }
+
+    // =============================================
+    // Gestion de Codigos
+    // =============================================
+    function validateCode() {
+      const code = document.getElementById('redeemCode').value.trim().toUpperCase();
+      
+      if (!currentAccount) {
+        showStatus("Cargue o seleccione una cuenta primero", "error");
+        return;
+      }
+      
+      if (!code || code.length !== 16) {
+        showStatus("El codigo debe tener 16 caracteres", "error");
+        return;
+      }
+      
+      if (codeDatabase.available[code]) {
+        document.getElementById('codeAmount').textContent = `Cantidad: ${codeDatabase.available[code].amount} AEIO-MR`;
+        document.getElementById('codeExpiration').textContent = `Valido hasta: ${new Date(codeDatabase.available[code].expires).toLocaleDateString()}`;
+        document.getElementById('codeInfo').style.display = 'block';
+        
+        showStatus("Codigo valido encontrado", "success");
+      } else if (codeDatabase.used[code]) {
+        showStatus("Este codigo ya fue canjeado", "error");
+        document.getElementById('codeInfo').style.display = 'none';
+      } else {
+        showStatus("Codigo no reconocido", "error");
+        document.getElementById('codeInfo').style.display = 'none';
+      }
+    }
+
+    function redeemCode() {
+      const code = document.getElementById('redeemCode').value.trim().toUpperCase();
+      
+      if (!currentAccount) {
+        showStatus("❌ Seleccione una cuenta válida antes de canjear", "error");
+        return;
+      }
+      
+      if (!code || !codeDatabase.available[code]) {
+        showStatus("❌ Código no válido", "error");
+        return;
+      }
+
+      const amount = codeDatabase.available[code].amount;
+      
+      // Registrar código como usado
+      codeDatabase.used[code] = {
+        ...codeDatabase.available[code],
+        redeemed: new Date().toISOString(),
+        account: currentAccount.id
+      };
+      delete codeDatabase.available[code];
+      
+      // Actualizar cuenta
+      currentAccount.saldo = (currentAccount.saldo || 0) + amount;
+      currentAccount.historial.unshift(`Canje de código ${code}: +${amount} AEIO-MR - ${new Date().toLocaleString()}`);
+      currentAccount.metadata.lastModified = new Date().toISOString();
+      
+      // Actualizar historial en UI
+      const historyDiv = document.getElementById('redeemHistory');
+      const entry = document.createElement('div');
+      entry.style.padding = "5px";
+      entry.style.borderBottom = "1px solid #eee";
+      entry.innerHTML = `<strong>${new Date().toLocaleString()}</strong> - Canjeado ${amount} AEIO-MR (Codigo: ${code})`;
+      historyDiv.prepend(entry);
+      
+      // Limpiar formulario
+      document.getElementById('redeemCode').value = '';
+      document.getElementById('codeInfo').style.display = 'none';
+      
+      showStatus(`✅ Canje exitoso: +${amount} AEIO-MR en ${currentAccount.nombre}`, "success");
+      updateUI();
+    }
+
+    function generateCodes() {
+      const amount = parseInt(document.getElementById('codeAmount').value) || 1;
+      const value = parseInt(document.getElementById('codeValue').value) || 100;
+      const expiry = document.getElementById('codeExpiry').value || '2026-12-31';
+      
+      if (amount < 1 || value < 10) {
+        showStatus("Cantidad y valor deben ser positivos", "error");
+        return;
+      }
+      
+      for (let i = 0; i < amount; i++) {
+        const code = 'ARK' + generateRandomString(13).toUpperCase();
+        codeDatabase.available[code] = {
+          amount: value,
+          expires: expiry,
+          generated: new Date().toISOString()
+        };
+      }
+      
+      showStatus(`${amount} codigos generados con valor de ${value} AEIO-MR cada uno`, "success");
+      updateCodeLists();
+    }
+
+    function updateCodeLists() {
+      const availableDiv = document.getElementById('availableCodes');
+      const usedDiv = document.getElementById('usedCodes');
+      
+      availableDiv.innerHTML = '';
+      if (Object.keys(codeDatabase.available).length === 0) {
+        availableDiv.innerHTML = "<p>No hay codigos disponibles</p>";
+      } else {
+        for (const [code, data] of Object.entries(codeDatabase.available)) {
+          const codeDiv = document.createElement('div');
+          codeDiv.style.padding = "5px";
+          codeDiv.style.borderBottom = "1px solid #eee";
+          codeDiv.innerHTML = `
+            <strong>${code}</strong> - ${data.amount} AEIO-MR
+            <div>Valido hasta: ${new Date(data.expires).toLocaleDateString()}</div>
+          `;
+          availableDiv.appendChild(codeDiv);
+        }
+      }
+      
+      usedDiv.innerHTML = '';
+      if (Object.keys(codeDatabase.used).length === 0) {
+        usedDiv.innerHTML = "<p>No hay codigos usados</p>";
+      } else {
+        for (const [code, data] of Object.entries(codeDatabase.used)) {
+          const codeDiv = document.createElement('div');
+          codeDiv.style.padding = "5px";
+          codeDiv.style.borderBottom = "1px solid #eee";
+          codeDiv.innerHTML = `
+            <strong>${code}</strong> - ${data.amount} AEIO-MR
+            <div>Canjeado el: ${new Date(data.redeemed).toLocaleDateString()}</div>
+            <div>En cuenta: ${data.account || 'N/A'}</div>
+          `;
+          usedDiv.appendChild(codeDiv);
+        }
+      }
+    }
+
+    // =============================================
+    // Funciones Auxiliares
+    // =============================================
+    function generateRandomString(length) {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let result = '';
+      for (let i = 0; i < length; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return result;
+    }
+
+    // Inicializacion
+    document.addEventListener('DOMContentLoaded', function() {
+      const expiryDate = new Date();
+      expiryDate.setMonth(expiryDate.getMonth() + 1);
+      document.getElementById('codeExpiry').valueAsDate = expiryDate;
+    });
+  </script>
+</body>
+</html>
+--- END CONTENT ---

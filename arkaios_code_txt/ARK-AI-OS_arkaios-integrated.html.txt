@@ -1,0 +1,289 @@
+ORIGINAL FILE: ARK-AI-OS/arkaios-integrated.html
+--- BEGIN CONTENT ---
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ARKAIOS - Elemiah UI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#f7f8fb;--panel:#fff;--muted:#667085;--text:#111827;--brand:#4f46e5;--ok:#16a34a;--warning:#f59e0b;--danger:#ef4444;--shadow:0 10px 30px rgba(17,24,39,.08);--radius:16px}
+    *{box-sizing:border-box} html,body{height:100%} body{margin:0;font-family:Inter,system-ui,Arial;background:var(--bg);color:var(--text)}
+    .app{display:grid;grid-template-columns:1fr 320px;gap:16px;padding:18px;max-width:1200px;margin:24px auto}
+    .chat{background:var(--panel);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid #eef2f7;display:flex;flex-direction:column;min-height:80vh}
+    .chat-header{padding:14px 16px;border-bottom:1px solid #eef2f7;display:flex;align-items:center;gap:10px}
+    .status-dot{width:10px;height:10px;border-radius:50%;animation:pulse 2s infinite}
+    .status-dot.online{background:var(--ok); animation:none;}
+    .status-dot.offline{background:var(--danger); animation:none;}
+    .status-dot.connecting{background:var(--warning)}
+    .title{font-weight:700}
+    .chip{display:inline-grid;place-items:center;padding:6px 10px;border-radius:99px;background:#f1f5ff;color:#1d4ed8;font-weight:600;font-size:12px;border:1px solid #e6ecff}
+    .chip.error{background:#fee2e2;color:#dc2626;border-color:#fca5a5}
+    .chip.success{background:#dcfce7;color:#16a34a;border-color:#bbf7d0}
+    .feed{flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
+    .msg{max-width:90%;padding:12px 14px;border-radius:14px;box-shadow:0 2px 8px rgba(15,23,42,.06);line-height:1.4;opacity:0;animation:fadeIn .3s forwards}
+    .msg.ai{background:#f1f5ff;border:1px solid #e6ecff}
+    .msg.me{background:#f7f7f9;border:1px solid #eceef3;margin-left:auto}
+    .msg.system{background:#eef2f7;border:1px solid #d1d5db;text-align:center;font-size:12px;color:var(--muted);width:fit-content;margin:0 auto;padding:6px 12px;}
+    .composer{display:flex;gap:10px;padding:12px;border-top:1px solid #eef2f7}
+    .composer textarea{flex:1;resize:none;height:48px;padding:12px;border-radius:12px;border:1px solid #e5e7eb}
+    .composer button{padding:12px 16px;border:none;border-radius:12px;cursor:pointer;font-weight:600;background:var(--brand);color:white}
+    .composer button:disabled{opacity:0.5;cursor:not-allowed}
+    .side{background:var(--panel);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid #eef2f7;padding:14px}
+    .side h3{margin:4px 0 10px; font-size: 16px;}
+    .commands-list{display:flex;flex-direction:column;gap:8px;font-size:13px;}
+    .cmd-item{background:#f8fafc;padding:8px 10px;border-radius:8px;border:1px solid #eef2f7}
+    .cmd-item code{font-weight:600;color:var(--brand)}
+    .logout{margin-left:auto; background: #fee2e2; color: #dc2626; border:1px solid #fca5a5; cursor:pointer; font-size:12px;}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    @media (max-width:980px){.app{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <section class="app">
+    <div class="chat">
+      <div class="chat-header">
+        <span class="status-dot connecting" id="status-dot"></span>
+        <span class="title">ARKAIOS</span>
+        <span class="chip" id="server-status">Conectando...</span>
+        <button class="chip logout" onclick="logout()">Salir</button>
+      </div>
+
+      <div id="feed" class="feed"></div>
+
+      <div class="composer">
+        <textarea id="text" placeholder="Escribe un mensaje o un comando (/)"></textarea>
+        <button id="send" onclick="sendMsg()">Enviar</button>
+      </div>
+    </div>
+
+    <aside class="side">
+      <h3>Comandos del Sistema</h3>
+      <div class="commands-list">
+        <div class="cmd-item"><code>/archivos</code> - Lista los archivos de cuenta.</div>
+        <div class="cmd-item"><code>/crearcuenta &lt;nombre&gt; &lt;usuario&gt; &lt;saldo&gt;</code></div>
+        <div class="cmd-item"><code>/transferir &lt;origen&gt; &lt;destino&gt; &lt;monto&gt;</code></div>
+        <div class="cmd-item"><code>/generarcodigos &lt;cantidad&gt; &lt;valor&gt;</code></div>
+        <div class="cmd-item"><code>/canjear &lt;usuario&gt; &lt;codigo&gt;</code></div>
+        <div class="cmd-item"><code>/clear</code> - Limpia la ventana del chat.</div>
+        <div class="cmd-item"><code>/help</code> - Muestra este panel de ayuda.</div>
+      </div>
+    </aside>
+  </section>
+
+  <script>
+    // Global state
+    let authToken = null;
+    let serverReady = false;
+
+    // DOM Elements
+    const statusDot = document.getElementById('status-dot');
+    const serverStatus = document.getElementById('server-status');
+    const feedEl = document.getElementById('feed');
+    const textInput = document.getElementById('text');
+    const sendBtn = document.getElementById('send');
+
+    // --- CORE FUNCTIONS ---
+
+    function mustAuth() {
+      authToken = localStorage.getItem('ark_token');
+      if (!authToken) {
+        location.href = '/';
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('ark_token');
+      localStorage.removeItem('ark_user');
+      location.href = '/';
+    }
+
+    function addMsg(html, who = 'ai') {
+      const d = document.createElement('div');
+      d.className = `msg ${who}`;
+      d.innerHTML = html.replace(/\n/g, '<br>');
+      feedEl.appendChild(d);
+      feedEl.scrollTop = feedEl.scrollHeight;
+    }
+
+    function updateServerStatus(isOnline, message) {
+        serverReady = isOnline;
+        statusDot.className = `status-dot ${isOnline ? 'online' : 'offline'}`;
+        serverStatus.className = `chip ${isOnline ? 'success' : 'error'}`;
+        serverStatus.textContent = message;
+        sendBtn.disabled = !isOnline;
+    }
+
+    async function apiCall(endpoint, options = {}) {
+        const url = `${window.location.origin}${endpoint}`;
+        const headers = {
+            'Content-Type': 'application/json',
+            ...options.headers,
+        };
+
+        const body = options.body ? JSON.stringify(options.body) : undefined;
+
+        try {
+            const response = await fetch(url, { ...options, headers, body });
+            const data = await response.json();
+            if (!data.ok) {
+                throw new Error(data.error || 'Error desconocido de la API');
+            }
+            return data;
+        } catch (error) {
+            console.error(`API Call failed for ${endpoint}:`, error);
+            throw error;
+        }
+    }
+
+    // --- CHAT AND COMMANDS ---
+
+    async function sendMsg() {
+      const text = textInput.value.trim();
+      if (!text) return;
+      
+      addMsg(text, 'me');
+      textInput.value = '';
+      sendBtn.disabled = true;
+
+      try {
+        if (text.startsWith('/')) {
+          await handleCommand(text);
+        } else {
+          // Send to general chat endpoint
+          const response = await apiCall('/chat', { 
+              method: 'POST', 
+              body: { message: text, token: authToken }
+          });
+          addMsg(response.reply, 'ai');
+        }
+      } catch (error) {
+        addMsg(`<b>Error del sistema:</b> ${error.message}`, 'ai');
+      } finally {
+        sendBtn.disabled = false;
+      }
+    }
+
+    async function handleCommand(command) {
+      const [cmd, ...args] = command.slice(1).split(/\s+/);
+      
+      try {
+        switch (cmd.toLowerCase()) {
+          case 'clear':
+            feedEl.innerHTML = '';
+            addMsg('Ventana de chat limpiada.', 'system');
+            break;
+
+          case 'help':
+            addMsg('Mostrando comandos disponibles en el panel lateral.', 'system');
+            break;
+
+          case 'archivos':
+            addMsg('Solicitando lista de archivos...', 'system');
+            const fileData = await apiCall('/files', { method: 'GET' });
+            const fileList = fileData.files.length > 0 ? fileData.files.join('\n') : 'No hay archivos en el sistema.';
+            addMsg(`<b>Archivos del Sistema:</b>\n${fileList}`, 'ai');
+            break;
+
+          case 'crearcuenta':
+            if (args.length !== 3) {
+              addMsg('<b>Error:</b> Uso incorrecto. \n<code>/crearcuenta &lt;nombre&gt; &lt;usuario&gt; &lt;saldo&gt;</code>', 'ai');
+              return;
+            }
+            const [nombre, usuario, saldo] = args;
+            addMsg(`Creando cuenta para <b>${usuario}</b>...`, 'system');
+            const createData = await apiCall('/api/accounts/create', {
+                method: 'POST', body: { nombre, usuario, saldo, token: authToken }
+            });
+            addMsg(`✅ Cuenta creada exitosamente para <b>${createData.account.usuario}</b> con saldo inicial de <b>${createData.account.saldo}</b>.`, 'ai');
+            break;
+
+          case 'transferir':
+            if (args.length !== 3) {
+              addMsg('<b>Error:</b> Uso incorrecto. \n<code>/transferir &lt;origen&gt; &lt;destino&gt; &lt;monto&gt;</code>', 'ai');
+              return;
+            }
+            const [origen_usuario, destino_usuario, monto] = args;
+            addMsg(`Transfiriendo <b>${monto}</b> de <b>${origen_usuario}</b> a <b>${destino_usuario}</b>...`, 'system');
+            const transferData = await apiCall('/api/operations/transfer', {
+                method: 'POST', body: { origen_usuario, destino_usuario, monto, token: authToken }
+            });
+            addMsg(`✅ ${transferData.message}`, 'ai');
+            break;
+
+          case 'generarcodigos':
+            if (args.length < 2) {
+                addMsg('<b>Error:</b> Uso incorrecto. \n<code>/generarcodigos &lt;cantidad&gt; &lt;valor&gt; [dias_expiracion]</code>', 'ai');
+                return;
+            }
+            const [cantidad, valor, dias_expiracion] = args;
+            addMsg(`Generando <b>${cantidad}</b> código(s) con valor <b>${valor}</b>...`, 'system');
+            const genData = await apiCall('/api/codes/generate', {
+                method: 'POST', body: { cantidad, valor, dias_expiracion, token: authToken }
+            });
+            addMsg(`✅ Códigos generados:\n${genData.codes.join('\n')}`, 'ai');
+            break;
+
+          case 'canjear':
+            if (args.length !== 2) {
+                addMsg('<b>Error:</b> Uso incorrecto. \n<code>/canjear &lt;usuario&gt; &lt;codigo&gt;</code>', 'ai');
+                return;
+            }
+            const [user, code] = args;
+            addMsg(`Canjeando código para <b>${user}</b>...`, 'system');
+            const redeemData = await apiCall('/api/operations/redeem', {
+                method: 'POST', body: { usuario: user, code, token: authToken }
+            });
+            addMsg(`✅ ${redeemData.message}`, 'ai');
+            break;
+
+          default:
+            addMsg(`<b>Comando no reconocido:</b> ${cmd}`, 'ai');
+            break;
+        }
+      } catch (error) {
+        addMsg(`<b>Error ejecutando comando:</b><br>${error.message}`, 'ai');
+      }
+    }
+
+    // --- INITIALIZATION ---
+
+    async function healthCheck() {
+        try {
+            await apiCall('/health', { method: 'GET' });
+            updateServerStatus(true, 'En Línea');
+            return true;
+        } catch (error) {
+            updateServerStatus(false, 'Desconectado');
+            return false;
+        }
+    }
+
+    textInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMsg();
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      mustAuth();
+      const user = JSON.parse(localStorage.getItem('ark_user') || '{}');
+      addMsg(`Autenticado como <b>${user.name || 'Usuario Demo'}</b>.`, 'system');
+      addMsg(`¡Hola! Soy Elemiah, la interfaz de ARKAIOS. El sistema está en línea y bajo mi control. Escribe <code>/help</code> para ver los comandos.`, 'ai');
+      
+      await healthCheck();
+      // Periodically check health
+      setInterval(healthCheck, 30000);
+    });
+  </script>
+</body>
+</html>
+
+
+--- END CONTENT ---

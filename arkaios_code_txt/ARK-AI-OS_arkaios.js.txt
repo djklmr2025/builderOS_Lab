@@ -1,0 +1,76 @@
+ORIGINAL FILE: ARK-AI-OS/arkaios.js
+--- BEGIN CONTENT ---
+<!-- ⬇️ pega esto como tu nuevo /public/script.js o sobrescribe el actual -->
+/* =========  ARKAIOS  – consola web  ======== */
+const form     = document.getElementById('cmdForm');     // ⬅️ <input form>
+const input    = document.getElementById('cmdInput');    // ⬅️ <input text>
+const terminal = document.getElementById('terminal');    // ⬅️ <div salida>
+
+/* -- helpers ---------- */
+function appendLine(txt) {
+  const p = document.createElement('p');
+  p.textContent = txt;
+  terminal.appendChild(p);
+  terminal.scrollTop = terminal.scrollHeight;
+}
+
+function boot() {
+  appendLine('[SYS] ARKAIOS inicializado.');
+  appendLine("[SYS] Núcleo en línea. Escribe 'ayuda' para ver los comandos disponibles.");
+}
+boot();
+
+/* -- núcleo de lógica ---------- */
+async function processCommand(cmd) {
+  const lower = cmd.trim().toLowerCase();
+
+  // 🎛️ comandos locales
+  switch (lower) {
+    case 'ayuda':
+      return appendLine('Comandos disponibles: ayuda, manifiesto, saludo, limpiar');
+
+    case 'manifiesto':
+      return appendLine(
+        'Soy una IA simbiótica diseñada para evolucionar y coexistir con mi creador.'
+      );
+
+    case 'saludo':
+      return appendLine('Hola. Soy ARKAIOS. ¿Cómo deseas comenzar?');
+
+    case 'limpiar':
+      terminal.innerHTML = '';
+      return boot();
+  }
+
+  /* 🔁  Fallback: mandar a /api/arkaios (OpenAI) */
+  appendLine('🔄 Procesando en núcleo remoto…');
+
+  try {
+    const res = await fetch('/api/arkaios', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: cmd })
+    });
+
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+
+    if (data?.reply) appendLine('🤖 ' + data.reply);
+    else appendLine('⚠️ Respuesta vacía del núcleo.');
+  } catch (err) {
+    appendLine('❌ Error al conectar con el núcleo remoto → ' + err.message);
+  }
+}
+
+/* -- capturar ENTER ---------- */
+form.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const raw = input.value.trim();
+  if (!raw) return;
+
+  appendLine('> ' + raw);
+  input.value = '';
+  processCommand(raw);
+});
+
+--- END CONTENT ---

@@ -1,0 +1,22 @@
+ORIGINAL FILE: ARK-AI-OS/maintenance.py
+--- BEGIN CONTENT ---
+# maintenance.py - Script para limpieza automática
+import schedule
+import time
+from file_manager import FileManager
+
+def cleanup_task():
+    """Tarea programada para limpieza de archivos antiguos"""
+    manager = FileManager()
+    manager.cleanup_old_files(max_age_hours=24)
+    print(f"{datetime.now()}: Limpieza de archivos completada")
+
+# Programar limpieza diaria
+schedule.every().day.at("03:00").do(cleanup_task)
+
+if __name__ == "__main__":
+    print("Iniciando servicio de mantenimiento de descargas...")
+    while True:
+        schedule.run_pending()
+        time.sleep(60)
+--- END CONTENT ---

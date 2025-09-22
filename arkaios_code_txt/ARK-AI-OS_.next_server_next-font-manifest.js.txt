@@ -1,0 +1,4 @@
+ORIGINAL FILE: ARK-AI-OS/.next/server/next-font-manifest.js
+--- BEGIN CONTENT ---
+self.__NEXT_FONT_MANIFEST="{\"pages\":{},\"app\":{},\"appUsingSizeAdjust\":false,\"pagesUsingSizeAdjust\":false}"
+--- END CONTENT ---

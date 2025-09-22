@@ -1,0 +1,465 @@
+ORIGINAL FILE: ARK-AI-OS/nuevas propuestas/nube.html
+--- BEGIN CONTENT ---
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ARKAIOS Cloud Sync</title>
+  <style>
+    :root {
+      --primary: #2c3e50;
+      --secondary: #3498db;
+      --dark: #1a252f;
+      --light: #ecf0f1;
+      --success: #27ae60;
+      --danger: #e74c3c;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, var(--dark), var(--primary));
+      color: var(--light);
+      min-height: 100vh;
+      line-height: 1.6;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    header {
+      text-align: center;
+      padding: 20px 0;
+      margin-bottom: 30px;
+    }
+    
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+      background: linear-gradient(to right, var(--secondary), #1abc9c);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .panels {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    @media (max-width: 768px) {
+      .panels {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .panel {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .panel h2 {
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--secondary);
+      color: var(--light);
+    }
+    
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+    
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      background: rgba(0, 0, 0, 0.3);
+      color: white;
+      font-size: 16px;
+    }
+    
+    .btn {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s;
+      font-size: 16px;
+      margin-right: 10px;
+      margin-top: 10px;
+    }
+    
+    .btn-primary {
+      background: var(--secondary);
+      color: white;
+    }
+    
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+    }
+    
+    .btn-success {
+      background: var(--success);
+      color: white;
+    }
+    
+    .file-list {
+      margin-top: 20px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    
+    .file-item {
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 8px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .file-actions {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .sync-status {
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 8px;
+      text-align: center;
+    }
+    
+    .status-connected {
+      background: rgba(39, 174, 96, 0.2);
+      border: 1px solid var(--success);
+    }
+    
+    .status-disconnected {
+      background: rgba(231, 76, 60, 0.2);
+      border: 1px solid var(--danger);
+    }
+    
+    .file-viewer {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 8px;
+      padding: 15px;
+      margin-top: 20px;
+      max-height: 400px;
+      overflow: auto;
+      font-family: monospace;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🔮 ARKAIOS Cloud Sync</h1>
+      <p>Sistema de sincronización para desarrollo colaborativo</p>
+    </header>
+    
+    <div class="sync-status" id="syncStatus">
+      <p>Estado: <span id="statusText">Desconectado</span></p>
+    </div>
+    
+    <div class="panels">
+      <div class="panel">
+        <h2>Conexión al Proyecto</h2>
+        <div class="form-group">
+          <label>Clave de Proyecto:</label>
+          <input type="password" id="projectKey" placeholder="Ingresa tu clave de proyecto">
+        </div>
+        
+        <div class="form-group">
+          <label>Token de Acceso ARKAIOS:</label>
+          <input type="password" id="accessToken" placeholder="ARK-SECURE-TOKEN-XXXX">
+        </div>
+        
+        <button class="btn btn-primary" onclick="connectProject()">Conectar al Proyecto</button>
+        <button class="btn btn-danger" onclick="disconnectProject()">Desconectar</button>
+      </div>
+      
+      <div class="panel">
+        <h2>Operaciones de Archivo</h2>
+        <div class="form-group">
+          <label>Subir archivo:</label>
+          <input type="file" id="fileUpload">
+        </div>
+        
+        <button class="btn btn-success" onclick="uploadFile()">Subir a la Nube</button>
+        
+        <div class="file-list" id="fileList">
+          <!-- Los archivos se cargarán dinámicamente aquí -->
+        </div>
+      </div>
+    </div>
+    
+    <div class="panel">
+      <h2>Visor de Archivos</h2>
+      <div class="form-group">
+        <label>Seleccionar archivo para ver:</label>
+        <select id="fileSelector" onchange="loadFileContent()">
+          <option value="">Selecciona un archivo</option>
+        </select>
+      </div>
+      
+      <div class="file-viewer" id="fileViewer">
+        <!-- El contenido del archivo se mostrará aquí -->
+      </div>
+      
+      <button class="btn btn-primary" onclick="saveChanges()" id="saveBtn" style="display:none; margin-top:15px;">
+        Guardar Cambios
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // Estado de la conexión
+    let projectConnected = false;
+    const API_URL = "https://arkaios-cloud-sync.example.com/api"; // URL real sería proporcionada
+    
+    // Simulación de almacenamiento en la nube
+    const cloudStorage = {
+      files: [],
+      projectKey: "",
+      accessToken: ""
+    };
+    
+    // Elementos del DOM
+    const syncStatus = document.getElementById('syncStatus');
+    const statusText = document.getElementById('statusText');
+    const fileList = document.getElementById('fileList');
+    const fileSelector = document.getElementById('fileSelector');
+    const fileViewer = document.getElementById('fileViewer');
+    const saveBtn = document.getElementById('saveBtn');
+    
+    // Actualizar estado de conexión
+    function updateConnectionStatus() {
+      if (projectConnected) {
+        syncStatus.className = 'sync-status status-connected';
+        statusText.textContent = 'Conectado al proyecto ARKAIOS';
+      } else {
+        syncStatus.className = 'sync-status status-disconnected';
+        statusText.textContent = 'Desconectado';
+      }
+    }
+    
+    // Conectar al proyecto
+    function connectProject() {
+      const projectKey = document.getElementById('projectKey').value;
+      const accessToken = document.getElementById('accessToken').value;
+      
+      if (!projectKey || !accessToken) {
+        alert('Por favor ingresa la clave del proyecto y el token de acceso');
+        return;
+      }
+      
+      // Aquí iría la autenticación real con el servidor
+      cloudStorage.projectKey = projectKey;
+      cloudStorage.accessToken = accessToken;
+      
+      // Simular conexión exitosa
+      projectConnected = true;
+      updateConnectionStatus();
+      
+      // Simular carga de archivos
+      simulateFileLoading();
+      
+      alert('¡Conexión exitosa! Proyecto sincronizado');
+    }
+    
+    // Desconectar proyecto
+    function disconnectProject() {
+      projectConnected = false;
+      cloudStorage.projectKey = "";
+      cloudStorage.accessToken = "";
+      fileList.innerHTML = "";
+      fileSelector.innerHTML = '<option value="">Selecciona un archivo</option>';
+      fileViewer.textContent = "";
+      saveBtn.style.display = 'none';
+      updateConnectionStatus();
+      alert('Proyecto desconectado');
+    }
+    
+    // Simular carga de archivos (en un sistema real esto vendría de la API)
+    function simulateFileLoading() {
+      // Archivos de ejemplo
+      cloudStorage.files = [
+        { name: 'index.html', content: '<!DOCTYPE html>\n<html>\n<head>\n<title>ARKAIOS</title>\n</head>\n<body>\n<h1>ARKAIOS System</h1>\n</body>\n</html>', type: 'text/html' },
+        { name: 'styles.css', content: 'body { font-family: Arial; background: #1a0033; }', type: 'text/css' },
+        { name: 'app.js', content: 'console.log("ARKAIOS iniciado");', type: 'application/javascript' },
+        { name: 'cuenta.arkaios', content: 'ENCRYPTED_DATA:ARKAIOS_ACCOUNT_FILE', type: 'application/octet-stream' }
+      ];
+      
+      // Actualizar lista de archivos
+      updateFileList();
+      updateFileSelector();
+    }
+    
+    // Actualizar lista de archivos
+    function updateFileList() {
+      fileList.innerHTML = "";
+      
+      cloudStorage.files.forEach(file => {
+        const fileItem = document.createElement('div');
+        fileItem.className = 'file-item';
+        
+        fileItem.innerHTML = `
+          <div>
+            <strong>${file.name}</strong>
+            <div>${file.type} • ${Math.ceil(file.content.length / 1024)} KB</div>
+          </div>
+          <div class="file-actions">
+            <button class="btn btn-primary" onclick="downloadFile('${file.name}')">Descargar</button>
+            <button class="btn btn-danger" onclick="deleteFile('${file.name}')">Eliminar</button>
+          </div>
+        `;
+        
+        fileList.appendChild(fileItem);
+      });
+    }
+    
+    // Actualizar selector de archivos
+    function updateFileSelector() {
+      fileSelector.innerHTML = '<option value="">Selecciona un archivo</option>';
+      
+      cloudStorage.files.forEach(file => {
+        const option = document.createElement('option');
+        option.value = file.name;
+        option.textContent = file.name;
+        fileSelector.appendChild(option);
+      });
+    }
+    
+    // Descargar archivo
+    function downloadFile(filename) {
+      const file = cloudStorage.files.find(f => f.name === filename);
+      if (!file) return;
+      
+      const blob = new Blob([file.content], { type: file.type });
+      const url = URL.createObjectURL(blob);
+      
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+    
+    // Eliminar archivo
+    function deleteFile(filename) {
+      if (!confirm(`¿Estás seguro de eliminar "${filename}"?`)) return;
+      
+      cloudStorage.files = cloudStorage.files.filter(f => f.name !== filename);
+      updateFileList();
+      updateFileSelector();
+      
+      if (fileSelector.value === filename) {
+        fileSelector.value = "";
+        fileViewer.textContent = "";
+        saveBtn.style.display = 'none';
+      }
+    }
+    
+    // Subir archivo
+    function uploadFile() {
+      const fileInput = document.getElementById('fileUpload');
+      if (!fileInput.files.length) {
+        alert('Selecciona un archivo primero');
+        return;
+      }
+      
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+      
+      reader.onload = function(e) {
+        const content = e.target.result;
+        
+        // Comprobar si el archivo ya existe
+        const existingIndex = cloudStorage.files.findIndex(f => f.name === file.name);
+        
+        if (existingIndex !== -1) {
+          if (!confirm(`"${file.name}" ya existe. ¿Sobrescribir?`)) return;
+          cloudStorage.files[existingIndex].content = content;
+        } else {
+          cloudStorage.files.push({
+            name: file.name,
+            content: content,
+            type: file.type
+          });
+        }
+        
+        updateFileList();
+        updateFileSelector();
+        fileInput.value = "";
+        alert(`Archivo "${file.name}" subido correctamente`);
+      };
+      
+      reader.readAsText(file);
+    }
+    
+    // Cargar contenido de archivo
+    function loadFileContent() {
+      const filename = fileSelector.value;
+      if (!filename) return;
+      
+      const file = cloudStorage.files.find(f => f.name === filename);
+      if (!file) return;
+      
+      if (file.type === 'application/octet-stream' || 
+          file.type === 'application/arkaios') {
+        fileViewer.textContent = "🔒 Archivo binario cifrado - Requiere ARKAIOS Desktop";
+        saveBtn.style.display = 'none';
+      } else {
+        fileViewer.textContent = file.content;
+        saveBtn.style.display = 'block';
+      }
+    }
+    
+    // Guardar cambios
+    function saveChanges() {
+      const filename = fileSelector.value;
+      if (!filename) return;
+      
+      const content = fileViewer.textContent;
+      const fileIndex = cloudStorage.files.findIndex(f => f.name === filename);
+      
+      if (fileIndex !== -1) {
+        cloudStorage.files[fileIndex].content = content;
+        alert(`Cambios en "${filename}" guardados`);
+      }
+    }
+    
+    // Inicializar estado
+    updateConnectionStatus();
+  </script>
+</body>
+</html>
+--- END CONTENT ---
