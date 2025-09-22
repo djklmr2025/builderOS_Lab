@@ -1,0 +1,235 @@
+ORIGINAL FILE: ARK-AI-OS/arkaios-worker.js
+--- BEGIN CONTENT ---
+// arkaios-worker.js
+importScripts('https://js.puter.com/v2/');
+importScripts('https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js');
+
+self.addEventListener('message', async (e) => {
+  const { type, data } = e.data;
+  
+  try {
+    switch(type) {
+      case 'PROCESS_MESSAGE':
+        await processMessage(data);
+        break;
+        
+      case 'FS_LIST':
+        await listFiles(data.path);
+        break;
+        
+      case 'FS_WRITE':
+        await writeFile(data.path, data.content);
+        break;
+        
+      case 'DIAGNOSE':
+        await runDiagnostics();
+        break;
+        
+      default:
+        self.postMessage({ 
+          type: 'ERROR', 
+          error: 'Tipo de mensaje no reconocido: ' + type 
+        });
+    }
+  } catch (error) {
+    self.postMessage({ 
+      type: 'ERROR', 
+      error: error.message || String(error) 
+    });
+  }
+});
+
+async function processMessage(data) {
+  const { text, model, role, pendingFiles } = data;
+  
+  // 1. Subir archivos si existen
+  let uploadedFiles = [];
+  if (pendingFiles && pendingFiles.length > 0 && self.puter?.fs) {
+    uploadedFiles = await uploadFiles(pendingFiles);
+  }
+  
+  // 2. Procesar comandos especiales
+  if (text.toLowerCase().startsWith('img:')) {
+    await processImageCommand(text, model);
+    return;
+  }
+  
+  if (text.toLowerCase().includes('analizar imagen')) {
+    await processImageAnalysis(text, model, uploadedFiles);
+    return;
+  }
+  
+  // 3. Procesar mensaje normal con Claude
+  const response = await chatWithClaude(text, model, role, uploadedFiles);
+  self.postMessage({
+    type: 'CLAUDE_RESPONSE',
+    data: { response: response }
+  });
+}
+
+async function uploadFiles(files) {
+  const uploaded = [];
+  
+  for (const fileData of files) {
+    try {
+      const puterFile = await puter.fs.upload(fileData.file);
+      const publicURL = await puter.fs.getPublicURL(puterFile.path);
+      
+      uploaded.push({
+        name: fileData.name,
+        url: publicURL,
+        type: fileData.type,
+        path: puterFile.path
+      });
+    } catch (error) {
+      console.error('Error subiendo archivo:', error);
+    }
+  }
+  
+  self.postMessage({
+    type: 'UPLOAD_COMPLETE',
+    data: { uploadedFiles: uploaded }
+  });
+  
+  return uploaded;
+}
+
+async function chatWithClaude(text, model, role, attachments) {
+  let fullMessage = `Eres ARKAIOS. Rol: ${role}. Contesta en español, claro y directo.\n\nUsuario: ${text}`;
+  
+  if (attachments.length > 0) {
+    fullMessage += "\n\nArchivos adjuntos:";
+    attachments.forEach(file => {
+      fullMessage += `\n- ${file.name}: ${file.url}`;
+    });
+  }
+  
+  try {
+    if (puter?.ai?.chat) {
+      const response = await puter.ai.chat(fullMessage, { model: model });
+      return typeof response === 'string' ? response : 
+             response?.text || 
+             response?.message?.content || 
+             response?.choices?.[0]?.message?.content ||
+             'No response';
+    }
+  } catch (error) {
+    throw new Error('Error comunicándose con Claude: ' + error.message);
+  }
+  
+  return 'No hay puente de IA disponible ahora mismo.';
+}
+
+async function processImageCommand(text, model) {
+  const prompt = text.replace(/^img\s*:\s*/i, '').trim();
+  const url = await generateImage(prompt);
+  
+  if (url && self.puter?.fs) {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const fileName = `/home/arkaios_img_${Date.now()}.png`;
+      await puter.fs.write(fileName, new Uint8Array(await blob.arrayBuffer()));
+    } catch (error) {
+      console.error('Error guardando imagen:', error);
+    }
+  }
+  
+  self.postMessage({
+    type: 'TXT2IMG_COMPLETE',
+    data: { url: url }
+  });
+}
+
+async function generateImage(prompt) {
+  try {
+    if (puter?.ai?.txt2img) {
+      return await puter.ai.txt2img(prompt, { size: '1024x1024' });
+    }
+    if (puter?.ai?.image?.generate) {
+      const result = await puter.ai.image.generate({ prompt: prompt });
+      return result?.url || result;
+    }
+  } catch (error) {
+    console.error('Error generando imagen:', error);
+  }
+  return null;
+}
+
+async function processImageAnalysis(text, model, uploadedFiles) {
+  // Lógica para análisis de imágenes
+  // (Similar a la existente pero adaptada para el worker)
+}
+
+async function listFiles(path) {
+  try {
+    if (puter?.fs) {
+      const items = await puter.fs.list(path);
+      self.postMessage({
+        type: 'FS_OPERATION_COMPLETE',
+        data: {
+          success: true,
+          operation: 'list',
+          result: items.map(i => i.name || i.path).join('\n') || '(vacío)'
+        }
+      });
+    }
+  } catch (error) {
+    self.postMessage({
+      type: 'FS_OPERATION_COMPLETE',
+      data: {
+        success: false,
+        operation: 'list',
+        error: error.message
+      }
+    });
+  }
+}
+
+async function writeFile(path, content) {
+  try {
+    if (puter?.fs) {
+      const blob = new Blob([content], { type: 'text/plain' });
+      const arrayBuffer = await blob.arrayBuffer();
+      await puter.fs.write(path, new Uint8Array(arrayBuffer));
+      
+      self.postMessage({
+        type: 'FS_OPERATION_COMPLETE',
+        data: {
+          success: true,
+          operation: 'write',
+          message: 'Archivo guardado en ' + path
+        }
+      });
+    }
+  } catch (error) {
+    self.postMessage({
+      type: 'FS_OPERATION_COMPLETE',
+      data: {
+        success: false,
+        operation: 'write',
+        error: error.message
+      }
+    });
+  }
+}
+
+async function runDiagnostics() {
+  let bridges = {
+    ai_chat: !!(puter?.ai?.chat),
+    ai_complete: !!(puter?.ai?.complete),
+    txt2img: !!(puter?.ai?.txt2img),
+    image_generate: !!(puter?.ai?.image?.generate),
+    fs: !!(puter?.fs)
+  };
+  
+  self.postMessage({
+    type: 'FS_OPERATION_COMPLETE',
+    data: {
+      success: true,
+      operation: 'diagnose',
+      result: `Detección IA:\n{ has_ai: ${!!(puter?.ai)}, bridges: ${JSON.stringify(bridges)} }\nPing … ok: pong`
+    }
+  });
+}
+--- END CONTENT ---

@@ -1,0 +1,4 @@
+ORIGINAL FILE: ARK-AI-OS/frontend/.next/static/development/_ssgManifest.js
+--- BEGIN CONTENT ---
+self.__SSG_MANIFEST=new Set;self.__SSG_MANIFEST_CB&&self.__SSG_MANIFEST_CB()
+--- END CONTENT ---

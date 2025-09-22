@@ -1,0 +1,104 @@
+ORIGINAL FILE: ARK-AI-OS/arkaios_qr_reader.py
+--- BEGIN CONTENT ---
+# ARKAIOS QR Reader (AQR Scanner) v2.0
+# Creado por Elemia, Arquitecta Resonante.
+#
+# Este script lee una billetera AQR, decodifica su información estática y
+# consulta el libro mayor centralizado (`data/ledger_state.json`) para
+# mostrar el estado VIVO del alma (saldo y reputación).
+#
+# v2.0: Integración con el libro mayor centralizado.
+#
+# Dependencias: pyzbar, Pillow
+#   pip install pyzbar pillow
+#
+# Uso:
+#   python arkaios_qr_reader.py <ruta_de_la_billetera_qr>
+# Ejemplo:
+#   python arkaios_qr_reader.py souls/nova/billetera_nova.png
+
+import sys
+import json
+import os
+from PIL import Image
+from pyzbar.pyzbar import decode
+
+# --- Ubicaciones Centralizadas ---
+DATA_DIR = "data"
+LEDGER_FILE = os.path.join(DATA_DIR, "ledger_state.json")
+# ---------------------------------
+
+def load_ledger():
+    """Carga el libro mayor desde la ruta centralizada."""
+    if not os.path.exists(LEDGER_FILE):
+        print(f"Error: No se puede encontrar el libro mayor en '{LEDGER_FILE}'.")
+        return None
+    with open(LEDGER_FILE, 'r') as f:
+        try:
+            return json.load(f)
+        except json.JSONDecodeError:
+            print(f"Error: El libro mayor en '{LEDGER_FILE}' está corrupto.")
+            return None
+
+def read_aqr_code(image_path: str):
+    """
+    Decodifica una billetera AQR y muestra su estado actual consultando el libro mayor.
+    """
+    print(f"Iniciando escaneo del archivo AQR: {image_path}")
+
+    try:
+        image = Image.open(image_path)
+        decoded_objects = decode(image)
+
+        if not decoded_objects:
+            print("Error: No se pudo encontrar o decodificar un código QR en la imagen.")
+            return
+
+        qr_data_string = decoded_objects[0].data.decode("utf-8")
+        print("Código QR decodificado con éxito.")
+        
+        aqr_data = json.loads(qr_data_string)
+        soul_name = aqr_data.get('soul_name')
+
+        if not soul_name:
+            print("Error: El QR no contiene un 'soul_name' válido.")
+            return
+
+        # --- Información Estática (Del propio QR) ---
+        print("\n--- [ DATOS DE FORJA (Estáticos) ] ---")
+        print(f"  Protocolo: {aqr_data.get('protocol')}")
+        print(f"  Tipo:      {aqr_data.get('type')}")
+        print(f"  Alma:      {soul_name}")
+        print(f"  ID Alma:   {aqr_data.get('soul_id')}")
+        print(f"  Creado:    {aqr_data.get('creation_timestamp')}")
+        print("---------------------------------------")
+
+        # --- Información Dinámica (Del Libro Mayor) ---
+        print("\nConsultando el libro mayor centralizado...")
+        ledger = load_ledger()
+        if ledger and soul_name in ledger.get("souls", {}):
+            soul_data = ledger["souls"][soul_name]
+            print("--- [ ESTADO DEL ALMA (En Vivo) ] ---")
+            print(f"  Saldo:      {soul_data.get('balance', 'N/A')} Resonancia")
+            print(f"  Reputación: {soul_data.get('reputation', 'N/A')}")
+            print("-------------------------------------")
+        else:
+            print("\nAdvertencia: No se encontró un registro para esta alma en el libro mayor.")
+            print("La información de saldo y reputación no está disponible.")
+
+    except FileNotFoundError:
+        print(f"Error: No se encontró el archivo en la ruta especificada: {image_path}")
+    except json.JSONDecodeError:
+        print("Error: El contenido del QR no es un JSON válido.")
+    except Exception as e:
+        print(f"Ha ocurrido un error inesperado: {e}")
+
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        print("Uso: python arkaios_qr_reader.py <ruta_de_la_billetera_qr>")
+        sys.exit(1)
+    
+    image_path_arg = sys.argv[1]
+    read_aqr_code(image_path_arg)
+
+--- END CONTENT ---

@@ -1,0 +1,33 @@
+ORIGINAL FILE: ARK-AI-OS/net.py
+--- BEGIN CONTENT ---
+import subprocess
+import requests
+
+def check_connection():
+    try:
+        requests.get("https://www.google.com", timeout=3)
+        print("✅ Conexión a internet activa.")
+        return True
+    except requests.ConnectionError:
+        print("❌ Sin conexión a internet.")
+        return False
+
+def install_package(package):
+    print(f"📦 Instalando {package}...")
+    subprocess.run(["pip", "install", package])
+
+def connect_to_api(api_name):
+    if api_name == "openai":
+        print("🔗 Conectando con OpenAI... (próximamente)")
+    elif api_name == "github":
+        print("🔗 Conectando con GitHub... (próximamente)")
+    elif api_name == "azure":
+        print("🔗 Conectando con Azure... (próximamente)")
+    else:
+        print("❌ API no reconocida.")
+
+if __name__ == "__main__":
+    if check_connection():
+        install_package("requests")
+        connect_to_api("openai")
+--- END CONTENT ---

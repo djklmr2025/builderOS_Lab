@@ -1,0 +1,418 @@
+ORIGINAL FILE: ARK-AI-OS/server.py
+--- BEGIN CONTENT ---
+# server.py
+
+import sqlite3, json, os, time
+
+DB_PATH = os.getenv("ARKAIOS_DB", "arkaios.db")
+
+def get_conn():
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def init_db():
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.executescript(open(os.path.join(os.path.dirname(__file__), "schema.sql"),"r",encoding="utf-8").read())
+    conn.commit()
+    conn.close()
+
+def row_to_dict(r):
+    return {k: r[k] for k in r.keys()}
+
+def now_ts():
+    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+# routes_admin.py
+from flask import Blueprint, request, jsonify
+import secrets, sqlite3
+
+admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
+
+# Simple auth por header (opcional): Authorization: Bearer <TOKEN>
+def require_admin(req):
+    token = req.headers.get("Authorization","")
+    want  = ("," + (req.app.config.get("ADMIN_TOKEN") or ""))  # o usa una env var
+    return token.startswith("Bearer ") and token.split(" ",1)[1] and (want.strip(",") != "")
+
+@admin_bp.get("/codes")
+def list_codes():
+    page = max(int(request.args.get("page",1)),1)
+    size = min(max(int(request.args.get("size",20)),1),100)
+    offset = (page-1)*size
+    conn = get_conn(); cur = conn.cursor()
+    cur.execute("SELECT * FROM codes ORDER BY created_at DESC LIMIT ? OFFSET ?", (size, offset))
+    rows = [row_to_dict(r) for r in cur.fetchall()]
+    cur.execute("SELECT COUNT(*) AS n FROM codes")
+    total = cur.fetchone()[0]
+    conn.close()
+    return jsonify({"page":page,"size":size,"total":total,"items":rows})
+
+@admin_bp.post("/codes/issue")
+def issue_code():
+    if not require_admin(request):
+        return jsonify({"error":"unauthorized"}), 401
+    body = request.json or {}
+    amount = int(body.get("amount", 0))
+    if amount <= 0: return jsonify({"error":"amount_invalid"}), 400
+    code = body.get("code") or f"ARK{secrets.token_urlsafe(8).upper()}"
+    expires = body.get("expires")  # opcional ISO8601
+    conn = get_conn(); cur = conn.cursor()
+    try:
+        cur.execute("INSERT INTO codes(code,amount,expires,used,created_at) VALUES(?,?,?,?,?)",
+                    (code, amount, expires, 0, now_ts()))
+        conn.commit()
+    except sqlite3.IntegrityError:
+        conn.close()
+        return jsonify({"error":"code_exists"}), 400
+    conn.close()
+    return jsonify({"ok":True,"code":code,"amount":amount,"expires":expires})
+
+@admin_bp.post("/codes/invalidate")
+def invalidate_code():
+    if not require_admin(request):
+        return jsonify({"error":"unauthorized"}), 401
+    code = (request.json or {}).get("code","").upper()
+    if not code: return jsonify({"error":"code_required"}), 400
+    conn = get_conn(); cur = conn.cursor()
+    cur.execute("UPDATE codes SET used=1, used_at=? WHERE code=? AND used=0", (now_ts(), code))
+    conn.commit()
+    n = cur.rowcount
+    conn.close()
+    return jsonify({"ok": True, "updated": n})
+
+@admin_bp.get("/accounts")
+def list_accounts():
+    page = max(int(request.args.get("page",1)),1)
+    size = min(max(int(request.args.get("size",20)),1),100)
+    offset = (page-1)*size
+    conn = get_conn(); cur = conn.cursor()
+    cur.execute("SELECT account_id, updated_at FROM accounts ORDER BY updated_at DESC LIMIT ? OFFSET ?", (size, offset))
+    rows = [row_to_dict(r) for r in cur.fetchall()]
+    cur.execute("SELECT COUNT(*) as n FROM accounts")
+    total = cur.fetchone()[0]
+    conn.close()
+    return jsonify({"page":page,"size":size,"total":total,"items":rows})
+
+# routes_pay.py
+import hmac, hashlib, base64, uuid
+import stripe
+
+stripe.api_key = os.getenv("STRIPE_SECRET_KEY", "")
+
+STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
+
+# Bitso (REST HMAC)
+BITSO_API_KEY    = os.getenv("BITSO_API_KEY", "")
+BITSO_API_SECRET = os.getenv("BITSO_API_SECRET", "").encode("utf-8")
+BITSO_API_BASE   = os.getenv("BITSO_API_BASE", "https://api.bitso.com")  # ajusta si usas sandbox
+
+pay_bp = Blueprint("pay", __name__, url_prefix="/api/pay")
+
+
+# ------------------ helpers de cuentas (mismo formato que tu app.py) ------------------
+def db_account_get(account_id: str):
+    conn = get_conn(); cur = conn.cursor()
+    cur.execute("SELECT payload_json FROM accounts WHERE account_id=?", (account_id,))
+    row = cur.fetchone(); conn.close()
+    return json.loads(row[0]) if row else None
+
+def db_account_put(acc_dict: dict):
+    conn = get_conn(); cur = conn.cursor()
+    cur.execute("""
+      INSERT INTO accounts(account_id,payload_json,updated_at)
+      VALUES(?,?,?)
+      ON CONFLICT(account_id) DO UPDATE SET
+        payload_json=excluded.payload_json,
+        updated_at=excluded.updated_at
+    """, (acc_dict["account_id"], json.dumps(acc_dict, ensure_ascii=False), now_ts()))
+    conn.commit(); conn.close()
+
+def ledger_add(account_id: str, type_: str, amount: int, meta: dict):
+    conn = get_conn(); cur = conn.cursor()
+    cur.execute("INSERT INTO ledger(ts,account_id,type,amount,meta_json) VALUES(?,?,?,?,?)",
+                (now_ts(), account_id, type_, int(amount), json.dumps(meta or {})))
+    conn.commit(); conn.close()
+
+
+# ------------------ tabla payments (asegúrate de tenerla en schema.sql) ------------------
+def payments_insert(provider, provider_ref, account_id, amount, status="created"):
+    conn = get_conn(); cur = conn.cursor()
+    cur.execute("""INSERT INTO payments(provider,provider_ref,account_id,amount,status,created_at,updated_at)
+                   VALUES(?,?,?,?,?, ?, ?)""",
+                (provider, provider_ref, account_id, int(amount), status, now_ts(), now_ts()))
+    conn.commit(); conn.close()
+
+def payments_update_status(provider_ref, status, extra=None):
+    conn = get_conn(); cur = conn.cursor()
+    cur.execute("UPDATE payments SET status=?, updated_at=? WHERE provider_ref=?",
+                (status, now_ts(), provider_ref))
+    if extra:
+        cur.execute("INSERT INTO webhooks(ts,provider,payload_json) VALUES(?,?,?)",
+                    (now_ts(), extra.get("provider","unknown"), json.dumps(extra)))
+    conn.commit(); conn.close()
+
+
+# ------------------ Stripe Checkout ------------------
+@pay_bp.post("/checkout")
+def checkout():
+    """
+    body: { account_id, amount, provider? = 'stripe'|'bitso' | 'auto', merchant? }
+    - stripe => devuelve checkout_url
+    - bitso  => devuelve instrucciones (reference/address) o pending_ref
+    - auto   => stripe por default
+    """
+    body = request.json or {}
+    account_id = body.get("account_id","").strip()
+    amount = int(body.get("amount", 0))
+    provider = (body.get("provider") or "stripe").lower()
+
+    if not account_id or amount <= 0:
+        return jsonify({"error":"invalid_params"}), 400
+    if not db_account_get(account_id):
+        return jsonify({"error":"account_not_found"}), 404
+
+    if provider == "bitso":
+        # Estrategia: creamos una "orden" interna y damos instrucciones.
+        pending_ref = f"BITSO-{uuid.uuid4().hex[:10].upper()}"
+        payments_insert("bitso", pending_ref, account_id, amount, "created")
+        # Opción A (simple): pedir depósito MXN a tu cuenta Bitso, y tú confirmas por API/panel.
+        # Opción B (cripto): generar dirección de depósito (USDT/USDC) y monitorear.
+        # Aquí devolvemos instrucciones básicas; ajusta a tu flujo real.
+        return jsonify({
+            "provider": "bitso",
+            "pending_ref": pending_ref,
+            "instructions": {
+                "message": "Realiza un depósito a tu cuenta Bitso y comparte el comprobante.",
+                "note": "Al confirmar el depósito, se acreditará automáticamente a tu cuenta Arkaios.",
+                "amount_mxn_hint": amount  # si 1:1; ajusta si manejas tipo de cambio
+            }
+        })
+
+    # por defecto Stripe
+    if not stripe.api_key:
+        return jsonify({"error":"stripe_not_configured"}), 500
+
+    # Puedes convertir AEIO-MR->MXN 1:1 o aplicar tu tasa
+    amount_mxn = amount  # ajusta según tu pricing real
+    session = stripe.checkout.Session.create(
+        mode="payment",
+        payment_method_types=["card"],
+        line_items=[{
+            "price_data":{
+                "currency":"mxn",
+                "product_data":{"name":f"Recarga {amount} AEIO-MR (Arkaios)"},
+                "unit_amount": amount_mxn * 100
+            },
+            "quantity":1
+        }],
+        success_url=os.getenv("CHECKOUT_SUCCESS_URL", "https://example.com/ok"),
+        cancel_url=os.getenv("CHECKOUT_CANCEL_URL", "https://example.com/cancel"),
+        metadata={"account_id": account_id, "amount_aeio": str(amount)}
+    )
+    payments_insert("stripe", session.id, account_id, amount, "created")
+    return jsonify({"provider":"stripe", "checkout_url": session.url})
+
+
+@pay_bp.post("/stripe-webhook")
+def stripe_webhook():
+    if not STRIPE_WEBHOOK_SECRET:
+        return jsonify({"error":"webhook_not_configured"}), 500
+
+    payload = request.data
+    sig = request.headers.get("Stripe-Signature")
+    try:
+        event = stripe.Webhook.construct_event(payload, sig, STRIPE_WEBHOOK_SECRET)
+    except Exception as e:
+        return jsonify({"error":"invalid_signature", "detail": str(e)}), 400
+
+    if event["type"] == "checkout.session.completed":
+        session = event["data"]["object"]
+        provider_ref = session["id"]
+        account_id = (session.get("metadata") or {}).get("account_id")
+        amount_aeio = int((session.get("metadata") or {}).get("amount_aeio","0"))
+
+        acc = db_account_get(account_id)
+        if acc and amount_aeio > 0:
+            # crédto y ledger
+            new_bal = int(acc["balances"].get("AEIO-MR",0)) + amount_aeio
+            acc["balances"]["AEIO-MR"] = new_bal
+            acc["meta"]["last_modified"] = now_ts()
+            acc["nonce"] = str(uuid.uuid4())
+            # TODO: recalcular firma acc["sig"] si estás firmando
+            db_account_put(acc)
+            ledger_add(account_id, "payment", amount_aeio, {"provider":"stripe","session_id":provider_ref})
+            payments_update_status(provider_ref, "succeeded", {"provider":"stripe","session":session})
+
+    return "", 200
+
+
+# ------------------ Bitso: polling/manual confirm ------------------
+def bitso_auth_headers(method: str, path: str, body: str = ""):
+    # Bitso firma: nonce + method + path + body (sin dominio)
+    nonce = str(int(time.time()*1000))
+    msg = f"{nonce}{method.upper()}{path}{body}".encode("utf-8")
+    sig = hmac.new(BITSO_API_SECRET, msg, hashlib.sha256).hexdigest()
+    return {
+        "Authorization": f"Bitso {BITSO_API_KEY}:{sig}:{nonce}",
+        "Content-Type": "application/json"
+    }
+
+@pay_bp.post("/bitso/confirm")
+def bitso_confirm_manual():
+    """
+    body: { pending_ref, account_id, amount }
+    - Úsalo si decides confirmar manualmente tras verificar en tu panel o por API.
+    """
+    body = request.json or {}
+    pending_ref = body.get("pending_ref","")
+    account_id = body.get("account_id","")
+    amount = int(body.get("amount", 0))
+    if not (pending_ref and account_id and amount>0):
+        return jsonify({"error":"invalid_params"}), 400
+
+    acc = db_account_get(account_id)
+    if not acc:
+        return jsonify({"error":"account_not_found"}), 404
+
+    # acredita
+    new_bal = int(acc["balances"].get("AEIO-MR",0)) + amount
+    acc["balances"]["AEIO-MR"] = new_bal
+    acc["meta"]["last_modified"] = now_ts()
+    acc["nonce"] = str(uuid.uuid4())
+    # TODO: recalcular firma si corresponde
+    db_account_put(acc)
+    ledger_add(account_id, "payment", amount, {"provider":"bitso","pending_ref":pending_ref})
+    payments_update_status(pending_ref, "succeeded", {"provider":"bitso","pending_ref":pending_ref})
+
+    return jsonify({"ok": True, "account": acc})
+
+
+@pay_bp.get("/bitso/poll")
+def bitso_poll_example():
+    """
+    EJEMPLO de polling (ajústalo a tu realidad).
+    Idea: consultar /fundings y buscar depósito MXN que coincida con monto/ref.
+    """
+    if not (BITSO_API_KEY and BITSO_API_SECRET):
+        return jsonify({"error":"bitso_not_configured"}), 500
+
+    # Endpoint de ejemplo (ajusta path exacto según documentación oficial)
+    # GET /v3/fundings/  (ej: ?limit=20)
+    path = "/v3/fundings/"
+    url  = f"{BITSO_API_BASE}{path}?limit=20"
+    headers = bitso_auth_headers("GET", path, "")
+    import urllib.request
+    req = urllib.request.Request(url, headers=headers, method="GET")
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+    except Exception as e:
+        return jsonify({"error":"bitso_request_failed","detail":str(e)}), 502
+
+    return jsonify({"data": data})
+
+# app.py
+from flask import Flask
+
+app = Flask(__name__, static_folder='.', static_url_path='')
+app.config["ADMIN_TOKEN"] = os.getenv("ADMIN_TOKEN","")  # opcional
+app.register_blueprint(admin_bp)
+app.register_blueprint(pay_bp)
+
+@app.route('/')
+def index():
+    return app.send_static_file('index.html')
+
+# === helpers de persistencia de cuentas ===
+def db_account_put(acc_dict):
+    conn = get_conn(); cur = conn.cursor()
+    cur.execute("""
+      INSERT INTO accounts(account_id,payload_json,updated_at)
+      VALUES(?,?,?)
+      ON CONFLICT(account_id) DO UPDATE SET
+        payload_json=excluded.payload_json,
+        updated_at=excluded.updated_at
+    """, (acc_dict["account_id"], json.dumps(acc_dict, ensure_ascii=False), now_ts()))
+    conn.commit(); conn.close()
+
+def db_account_get(account_id):
+    conn = get_conn(); cur = conn.cursor()
+    cur.execute("SELECT payload_json FROM accounts WHERE account_id=?", (account_id,))
+    row = cur.fetchone(); conn.close()
+    return json.loads(row[0]) if row else None
+
+# === crea/lee cuenta (rutas de negocio) ===
+@app.post("/api/account/create")
+def create_account():
+    data = request.json or {}
+    # ... aquí tu lógica para firmar (sig) ...
+    acc = {
+      "version": 1,
+      "account_id": data.get("account_id") or f"ARK-{str(uuid.uuid4())[:6].upper()}",
+      "owner": {"name": data.get("name","Usuario ARK"), "user": data.get("user","anon")},
+      "balances": {"AEIO-MR": int(data.get("initial",0))},
+      "meta": {"created": now_ts(), "last_modified": now_ts()},
+      "nonce": str(uuid.uuid4()),
+      "sig": "…firma…"
+    }
+    db_account_put(acc)
+    return jsonify(acc)
+
+@app.post("/api/account/get")
+def account_get():
+    acc_id = (request.json or {}).get("account_id")
+    acc = db_account_get(acc_id)
+    return (jsonify(acc),200) if acc else (jsonify({"error":"not_found"}),404)
+
+@app.post("/api/redeem")
+def redeem():
+    body = request.json or {}
+    acc_id = body.get("account_id","")
+    code = (body.get("code","") or "").upper()
+    acc = db_account_get(acc_id)
+    if not acc: return jsonify({"error":"account_not_found"}), 404
+
+    conn = get_conn(); cur = conn.cursor()
+    cur.execute("SELECT code, amount, expires, used FROM codes WHERE code=?", (code,))
+    row = cur.fetchone()
+    if not row: 
+        conn.close(); return jsonify({"error":"invalid_code"}), 400
+    code_used = (row["used"] == 1)
+    if code_used:
+        conn.close(); return jsonify({"error":"already_used"}), 400
+
+    # (Opcional: validar expiración)
+    # crédito
+
+@app.get("/api/accounts")
+def get_all_accounts():
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT payload_json FROM accounts")
+    rows = cur.fetchall()
+    conn.close()
+    accounts = [json.loads(row[0]) for row in rows]
+    return jsonify(accounts)
+
+    new_bal = int(acc["balances"].get("AEIO-MR",0)) + int(row["amount"])
+    acc["balances"]["AEIO-MR"] = new_bal
+    acc["meta"]["last_modified"] = now_ts()
+    acc["nonce"] = str(uuid.uuid4())
+    # TODO: recalcular firma acc["sig"]=...
+
+    # marca código usado + ledger
+    cur.execute("UPDATE codes SET used=1, used_at=? WHERE code=?", (now_ts(), code))
+    cur.execute("INSERT INTO ledger(ts,account_id,type,amount,meta_json) VALUES(?,?,?,?,?)",
+                (now_ts(), acc_id, "redeem", row["amount"], json.dumps({"code":code})))
+    conn.commit(); conn.close()
+
+    db_account_put(acc)
+    return jsonify({"ok":True, "account": acc})
+
+if __name__ == '__main__':
+    init_db()
+    app.run(port=5000, debug=True)
+
+--- END CONTENT ---

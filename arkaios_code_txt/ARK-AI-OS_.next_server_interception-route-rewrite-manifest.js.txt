@@ -1,0 +1,4 @@
+ORIGINAL FILE: ARK-AI-OS/.next/server/interception-route-rewrite-manifest.js
+--- BEGIN CONTENT ---
+self.__INTERCEPTION_ROUTE_REWRITE_MANIFEST="[]"
+--- END CONTENT ---

@@ -1,0 +1,68 @@
+ORIGINAL FILE: ARK-AI-OS/core.py
+--- BEGIN CONTENT ---
+import os
+import subprocess
+import json
+from pathlib import Path
+
+def banner():
+    print("=" * 40)
+    print("||     DJKLMR Builder OS Terminal    ||")
+    print("||     🧠 Modular + Conectado         ||")
+    print("=" * 40)
+
+def load_config():
+    config_path = Path("config.json")
+    if config_path.exists():
+        with open(config_path, "r") as f:
+            return json.load(f)
+    else:
+        return {"autor": "djklmr", "modo": "local", "api_keys": {}}
+
+def verify_tools():
+    tools = ["python", "docker", "node", "git"]
+    print("\n🔍 Verificando herramientas:")
+    for tool in tools:
+        path = shutil.which(tool)
+        if path:
+            print(f"✅ {tool} → {path}")
+        else:
+            print(f"⚠️ {tool} no encontrado.")
+
+def run_script(script_name):
+    path = Path(f"D:/artículos/ARK-ARK-05/{script_name}.py")
+    if path.exists():
+        subprocess.run(["python", str(path)])
+    else:
+        print("❌ Script no encontrado.")
+
+def menu():
+    banner()
+    config = load_config()
+    while True:
+        print("\n📂 Opciones:")
+        print("1. Verificar entorno")
+        print("2. Ejecutar script de privacidad")
+        print("3. Conectar con API externa")
+        print("4. Crear nuevo módulo")
+        print("5. Salir")
+
+        choice = input("👉 Elige una opción: ")
+        if choice == "1":
+            verify_tools()
+        elif choice == "2":
+            script = input("📜 Nombre del script .py: ")
+            run_script(script)
+        elif choice == "3":
+            print("🔗 Conectando con APIs... (próximamente)")
+        elif choice == "4":
+            print("🛠️ Constructor de módulos... (próximamente)")
+        elif choice == "5":
+            print("👋 Cerrando Builder OS...")
+            break
+        else:
+            print("❌ Opción inválida.")
+
+if __name__ == "__main__":
+    menu()
+--- END CONTENT ---

@@ -1,0 +1,71 @@
+ORIGINAL FILE: ARK-AI-OS/license.html
+--- BEGIN CONTENT ---
+
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<title>Arkaios – Activación</title>
+<style>
+  body { margin:0; font-family:Segoe UI,Roboto,Arial,sans-serif; background:#0b0b0f; color:#e6e6ea; }
+  .wrap { display:flex; flex-direction:column; gap:16px; align-items:center; justify-content:center; min-height:100vh; padding:24px; }
+  .card { background: linear-gradient(145deg,#121218,#0a0a0e); border:1px solid #1f1f29; border-radius:16px; padding:24px; width:520px; max-width:95vw; box-shadow:0 10px 30px rgba(0,0,0,.45); }
+  h1{ margin:0 0 8px 0; font-weight:600; letter-spacing:.5px;}
+  .sub{ opacity:.85; font-size:14px; line-height:1.4; }
+  .brand{ display:flex; gap:12px; align-items:center; }
+  .brand img{ width:48px; height:48px; }
+  .row{ display:flex; gap:8px; margin-top:16px; }
+  input{ flex:1; padding:12px 14px; border-radius:10px; border:1px solid #2a2a38; background:#0f0f15; color:#fff; font-size:16px; letter-spacing:2px; }
+  button{ padding:12px 16px; border:none; border-radius:10px; background:#9a1d2e; color:#fff; font-weight:600; cursor:pointer; }
+  button:hover{ filter:brightness(1.1); }
+  .foot{ margin-top:10px; font-size:12px; opacity:.75; text-align:center; }
+  .err{ color:#ff5577; font-size:13px; min-height:18px; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="brand">
+        <img src="assets/icon.ico" alt="Arkaios">
+        <div>
+          <h1>Arkaios 1.0 – Activación</h1>
+          <div class="sub">Realizado con TECNOLOGÍA IA-ARKAIOS, Dios de la IA, la única SLLM<br/>Impulsado por IA – Tecnología OpenAI &amp; Chat‑GPT5</div>
+        </div>
+      </div>
+      <div class="row">
+        <input id="key" placeholder="XXXXX-XXXXX-XXXXX-XXXXX-XXXXX" maxlength="29" autofocus />
+        <button onclick="activate()">Validar</button>
+      </div>
+      <div id="err" class="err"></div>
+      <div class="foot">Origen mítico: <span id="origin">0001-01-01</span></div>
+    </div>
+  </div>
+<script>
+const keyEl = document.getElementById('key');
+const errEl = document.getElementById('err');
+const originEl = document.getElementById('origin');
+
+window.arkaios.getAppMeta().then(meta => {
+  originEl.textContent = meta.mythicOriginDate || '0001-01-01';
+});
+
+function normalize(k){
+  return (k||'').toUpperCase().replace(/[^A-Z0-9]/g,'').replace(/(.{5})/g,'$1-').replace(/-$/,'');
+}
+
+keyEl.addEventListener('input', e => {
+  keyEl.value = normalize(keyEl.value);
+});
+
+async function activate(){
+  errEl.textContent = '';
+  const res = await window.arkaios.validateLicense(keyEl.value);
+  if(!res.ok){
+    errEl.textContent = '❌ No eres digno de Arkaios, mortal... intenta nuevamente o abandona este reino.';
+  }
+}
+</script>
+</body>
+</html>
+
+--- END CONTENT ---
