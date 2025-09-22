@@ -1,7 +1,0 @@
-3. Ejecútalo en segundo plano:
-bash
-nohup ./anti_override.sh > protection.log 2>&1 &
-4. Verifica que esté funcionando:
-bash
-tail -f protection.log
-ps aux | grep anti_override
