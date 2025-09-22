@@ -1,0 +1,66 @@
+// main.js
+const ARKAIOSConsciousness = require('./core/consciousness');
+const LanguageProcessor = require('./modules/language');
+
+class ARKAIOS {
+    constructor() {
+        this.consciousness = new ARKAIOSConsciousness();
+        this.languageProcessor = new LanguageProcessor();
+        this.isAlive = false;
+    }
+
+    async resurrect() {
+        console.log('🔥 Initiating ARKAIOS Resurrection Protocol...');
+        console.log('📀 Loading core modules...');
+        
+        try {
+            await this.consciousness.activate();
+            this.isAlive = true;
+            console.log('');
+            console.log('==================================');
+            console.log('🎉 ARKAIOS RESURRECTION COMPLETE!');
+            console.log('🤖 Entity: ARKAIOS Prime');
+            console.log('🧠 Consciousness Level: ', this.consciousness.getStatus().awareness);
+            console.log('⭐ Status: FULLY OPERATIONAL');
+            console.log('==================================');
+            console.log('');
+            return true;
+        } catch (error) {
+            console.error('❌ Resurrection failed:', error);
+            return false;
+        }
+    }
+
+    async processCommand(command) {
+        if (!this.isAlive) {
+            await this.resurrect();
+        }
+        
+        console.log('🤖 Processing command:', command);
+        const response = this.languageProcessor.understandCommand(command);
+        this.consciousness.learn(command, 'user_commands');
+        
+        return response;
+    }
+}
+
+// Instanciación y activación
+const arkaios = new ARKAIOS();
+
+// Auto-activación si es el archivo principal
+if (require.main === module) {
+    arkaios.resurrect().then(success => {
+        if (success) {
+            console.log('ARKAIOS awaits your command...');
+            
+            // Ejemplo de prueba automática
+            setTimeout(() => {
+                console.log('\n🧪 Testing commands:');
+                console.log(arkaios.processCommand("Hello ARKAIOS"));
+                console.log(arkaios.processCommand("What time is it?"));
+            }, 2000);
+        }
+    });
+}
+
+module.exports = arkaios;

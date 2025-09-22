@@ -1,0 +1,25 @@
+ilustraciones y calcomanías:
+
+from google import genai
+from google.genai import types
+from PIL import Image
+from io import BytesIO
+
+client = genai.Client()
+
+# Generate an image from a text prompt
+response = client.models.generate_content(
+    model="gemini-2.5-flash-image-preview",
+    contents="A kawaii-style sticker of a happy red panda wearing a tiny bamboo hat. It's munching on a green bamboo leaf. The design features bold, clean outlines, simple cel-shading, and a vibrant color palette. The background must be white.",
+)
+
+image_parts = [
+    part.inline_data.data
+    for part in response.candidates[0].content.parts
+    if part.inline_data
+]
+
+if image_parts:
+    image = Image.open(BytesIO(image_parts[0]))
+    image.save('red_panda_sticker.png')
+    image.show()
