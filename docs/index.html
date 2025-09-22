@@ -4,24 +4,45 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>ARKAIOS / BuilderOS — Índice</title>
 <h1>ARKAIOS / BuilderOS — Índice</h1>
+<p>generated: <span id="gen">...</span></p>
+
+<input id="q" placeholder="Buscar por ruta o tipo (doc|code|module)..." style="width:100%;padding:.6rem;font-size:1rem;margin:.5rem 0;" />
+
 <pre id="out">Cargando index.json...</pre>
+
 <script>
-fetch('index.json').then(r=>r.json()).then(idx=>{
-  const out=document.getElementById('out');
+let DATA = null;
+const out = document.getElementById('out');
+const gen = document.getElementById('gen');
+const q = document.getElementById('q');
+
+function render(filter='') {
+  if (!DATA) return;
   const lines=[];
-  lines.push(`generated: ${idx.generated}\n`);
-  for(const c of idx.collections||[]){
-    const n=(c.entries||[]).length;
-    lines.push(`## ${c.name} (${n})`);
-    for(const e of (c.entries||[]).slice(0,200)){
+  gen.textContent = DATA.generated || '';
+  const f = filter.trim().toLowerCase();
+  for (const c of DATA.collections||[]) {
+    const entries = (c.entries||[]).filter(e=>{
+      if (!f) return true;
+      const hay = (e.path||'') + ' ' + (e.kind||'');
+      return hay.toLowerCase().includes(f);
+    });
+    lines.push(`## ${c.name} (${entries.length}/${(c.entries||[]).length})`);
+    for (const e of entries.slice(0,500)) {
       lines.push(`- ${e.path}  [${e.kind}]  (${e.size} bytes)`);
     }
-    if(n>200) lines.push(`... +${n-200} más`);
+    if (entries.length>500) lines.push(`... +${entries.length-500} más`);
     lines.push('');
   }
-  out.textContent=lines.join('\n');
+  out.textContent = lines.join('\n');
+}
+
+fetch('index.json').then(r=>r.json()).then(idx=>{
+  DATA = idx; render('');
 }).catch(err=>{
-  out.textContent='Error leyendo index.json: '+err;
+  out.textContent = 'Error leyendo index.json: '+err;
 });
+
+q.addEventListener('input', e=>render(e.target.value));
 </script>
 </html>
