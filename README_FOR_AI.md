@@ -13,7 +13,7 @@
 1. **Leer** `index.json`, mapear colecciones y priorizar lectura.
 2. **Planear**:
 
-POST https://<GATEWAY>/aida/gateway
+POST https://arkaios-gateway-open.onrender.com/aida/gateway
 Content-Type: application/json
 
 {"agent_id":"<tu_nombre>","action":"plan","params":{"objective":"<tu_objetivo>"}}
