@@ -1,0 +1,351 @@
+v 0.0.0.31
+First public release.
+Basic functions.
+
+v 0.0.0.32
+Fixed: Minor bugs.
+Improved: Network receiver functionality.
+Added: Donation links.
+
+v 0.0.0.33
+Added: Tooltips.
+
+v 0.0.0.34
+Removed: Manual encrypt button.
+Added: Function to prohibit password change when program is armed.
+Improved: Encryption text box locked from user changes.
+Changed: Default value for unlock by entering password to enabled.
+Changed: Network respond functionality.
+
+v 0.0.0.35
+Fixed: Crash on start-up when USB Raptor always starts armed is enabled.
+Fixed: Dead-end when looking for serial number when starting armed.
+
+v 0.0.0.36
+Added: Simple configuration panel.
+Added: Function to display IP address on lock screen.
+Added: Lock screen customization options on more_settings.ini
+Fixed: Some minor bugs.
+
+
+v 0.0.0.37
+Improved: Password is stored in encrypted format.
+Added: Option to suppress warning messages on more_settings.ini
+Fixed: Network receiver bug.
+
+v 0.0.0.38
+Added: New tab on options window.
+Fixed: Crash under about screen (come on... on about screen?).
+Some other cosmetic changes.
+
+v.0.0.0.39
+Fixed: Bug on lock screen scrolling messages.
+Fixed: Bug on unlock for triple screen systems.
+Added: Basic security/activity log functionality. 
+Added: About key on tray menu.
+Fixed: Serial number bug which appeared on previous version.
+
+v.0.0.0.40
+Changed: Log file name. Now logs saved as %ComputerName%_USB_Raptor_activity.log
+Added: Option to accept only keys created on current system only.
+Added: Remote Lockdown function.
+Improved:  file attributes changed to hidden and read only.
+Fixed: Minor window positioning bug.
+Fixed: Minor network commands bug.
+
+v.0.0.0.41
+Removed: Encrypted data preview pane (It was useless).
+Added: Network receiver disable option.
+Fixed: Bug on lock windows position for multi-screen systems. 
+Added: Option to disable remote lockdown.
+Removed: Refresh drives command link because auto refresh works just fine.
+Improved: Interface appearance.
+
+v.0.0.0.42 (Avocado)
+Added: Network lock sync tab.
+Added: Network lockdown sync (Beta function).
+Fixed: Bug on program log.
+Added: Ability to change custom messages remotely.
+
+v.0.0.0.43 (Olive)
+Fixed: Minor bug on lock window color.
+Fixed: Bug crashing when starting armed and in slave mode.
+Added: Check for updates link under about screen.
+Improved: Program accepts external lockdown trigger.
+Added: Language indicator under lock screen (useful for multi-language systems)
+Added: Screen saver support. Screen saver created to integrate lock when system is idle.
+
+v.0.0.1.44 (Tomato)
+Fixed: Bug on password display under simplified mode.
+Added: Option to write informational file to USB drive.
+c: Tooltips.
+
+v0.0.1.45 (Kiwi)
+Added: Option to change custom message size and scrolling speed.
+Added: Lock screen customization panel under Lock Features > Lock screen options > Customize
+Improved: Some minor other interface elements. 
+
+v0.0.1.46 (Kiwi)
+Added: Network detector and network responder.
+
+v0.0.2.47 (Kiwi)
+Added: Volume rename function.
+Changed: Executable running priority to high.
+
+v0.0.2.48 (Carrot)
+Added: Serial lock support (beta stage - requires "USB Raptor Serial Bridge" utility).
+Changed: Lock delay can be selected between 1 and 20 seconds.
+Added: Option to select auto arm pop up location. 
+Fixed: Bug on computer tailored file. Now it can be checked only when USB Raptor is disabled. 
+Changed: Tray menu items are re-arranged.
+Fixed: Bug on beta controls option. 
+Changed: Some program icons.
+
+
+v0.0.3.49 (Carrot)
+Added: Tooltips on Lock Screen Customization window. 
+Improved: Special keywords are accepted for lock screen message.
+Improved: Large optimization on source code.
+Improved: Serial lock operation optimization (USB Raptor Serial Bridge is still required). First Arduino based key sketch written.
+Fixed: More tooltips.
+
+v0.0.4.50 (Corn)
+Added: New serial number pairing option available. Old checking kept in place as well.
+Added: Some warning messages when enabling specific options.
+Fixed: Bug on displaying warning messages during program start. 
+Fixed: Minor bug on USB drive selection. 
+
+v0.0.4.51 (Corn)
+Added: Option to display network ID on lock screen.
+Added: Disclaimer screen.
+Fixed: Resize bug on lock screen customization panel.
+
+v0.0.4.52 (Corn)
+Added: Option to turn off monitor when locking. 
+
+v0.0.4.53 (Corn)
+Added: Option to change lock screen logos with custom ones.
+Fixed: Bug on lock screen keywords function.
+Added: Tool to reset all settings to default (including ini settings).  
+
+v0.0.4.54 (Corn)
+Fixed: Bug when program crashed under drive removed. 
+
+v0.0.5.55 (Watermelon)
+Fixed: Bug on custom logos folder detection duriing program startup.
+Removed: Unused source files. 
+
+v0.0.6.56 (Apricot)
+Changed: Master key encoding/decoding.
+
+v0.0.7.57 (Pomegranate)
+Added: Controls to help on customization with custom logos.
+Improved: New task manager blockage adopted.
+Added: Function to report status to "Raptor’s Nest".
+Added: Function to report status to dweet.io
+
+v0.0.7.58 (Green Plum)
+Added: Function to display the popup message when configuring its position.
+Added: Banner to lock screen in order to indicate wrong key or password used while the system locked.
+Added: "Insomnia" function to prevent system from going to sleep or run screen saver once is locked.
+
+v0.0.7.59 (Green Plum)
+Fixed: Bug on triple monitor systems causing program crash.
+Fixed: Bug on locking procedure appeared in some systems due limited rights. 
+
+v0.0.7.60 (Green Plum)
+Improved: X button (close) on main window sends program to system tray.
+Added: Close button on main program window.
+
+v0.0.8.61 (Green Plum)
+Added: A bunch of new keywords available for dynamic text on the lock screen.
+Fixed: Bug on log functionality. No more log files when the log is disabled.
+
+v0.8.62 (Green Plum)
+Improved: Master key functionality.
+Fixed: Network messaging bug.
+
+v0.9.63 (Cherry)
+Added: Option to hide splash screen (available to donors or long-term users).
+Removed: Unused source files (for another time). 
+
+v0.9.64 (Cherry)
+Fixed: Lock screens misbehavior.
+
+v0.9.65 (Cherry)
+Fixed: Major bug which caused respond delays on program.
+Fixed: Indication or lock screen for wrong key used.
+Removed: "RC" indication from main window.
+Fixed: Some other minor bugs.
+
+v0.10.66 (Pepper)
+Fixed: Crash when system diagnostics are corrupted in some systems.
+Added: Steady color selection for lock screens.
+Added: "Color preview" window to help users select color.
+Fixed: Bug causing interface freezing.
+
+v0.11.67 (Strawberry)
+Updated: Disclaimer/Terms of use.
+Fixed: Bug on delay lock screen which caused wrong numbers displayed.
+Added: "Abort lock" panel on delay lock to help users cancel lock process.
+Improved: USB key detection functionality to abort lock once valid key is detected during delay.
+Fixed: Possible security flaw on encryption.
+Fixed: Windows positioning bug when it is called from tray.
+Improved: Network functionality.
+Improved: Sound on lock functionality.
+Changed: Lock screen customization options window size.
+Added: Options to ask for password or PIN after valid key insertion.
+Added: Support for custom lock informational text.
+Added: Option to show terms of use from about screen.
+
+v0.11.68 (Strawberry)
+Changed: Main window startup position.
+Changed: PIN is set to hidden on unlock screen.
+Added: Password and PIN reveal controls on lock screen.
+Added: More colors for steady color selection.
+Changed: PIN warning and Password warning behavior.
+
+v0.11.69 (Strawberry)
+Fixed: Some tooltips
+Fixed: Bug on PIN window.
+Changed: Logos
+Fixed: Bug on mouse pointer change.
+
+v0.11.70 (Lemon)
+Improved: Pass & PIN fields on lock screen.
+Fixed: Minor bug on lock screen.
+Fixed: Other minor bugs.
+Improved: Source code optimizations.
+Changed: Minor design changes here and there.
+Added: Registry diagnostics routine (for error 16). 
+Improved: IP address detection and display on lock screen.
+
+v0.12.71 (Lemon)
+Added: Option to sound on unlock.
+Added: Controls to create, edit and delete info text for lock screens.
+Added: Report to LCD Smartie. Now the status can be displayed on external LCD Screen.
+Fixed: Bug on Raptor's Nest reporting.
+Added: "Agitated field" effect on wrong PIN validation.
+Fixed: Bug causing unhandled error under empty PIN validation.
+Changed: Tray icon color to indicate disabled program.  
+Improved: Color preview window. 
+Removed: Changed master key warning on startup.
+
+v0.12.72 (Eggplant)
+Fixed: Crash when system performance counters are corrupt.
+Changed: Color selection method for lock window.
+Improved: Text color on lock screen changed dynamically.
+Added: Integration option to execute third party files on lock or unlock.
+
+v0.13.73 (Okra)
+Fixed: Bug on network lock synchronization.
+Added: Warning message for user who have selected windows lock type.
+Added: RUID file unlock for USB Raptor interface.
+Fixed: Minor interface changes.
+Improved: Program startup options saving.
+Added: Password reveal option on password dialog form.
+
+v0.13.74 (Okra)
+Fixed: Donation links issue.
+Improved: Custom lock screen images management.
+Added: Warning message when user enables interface lock.
+Improved: Agitate effect on password window.
+
+v0.14.75 (Mango)
+Fixed: Close reporting on Dweet.
+Added: Ability to get predefined password on first run.
+Fixed: Settings saving and restore for some options.
+Added: Export and Import settings function (available to donors).
+Added: Function to auto-import configuration file on first program run.
+Fixed: Buggy behavior on corrupted password detection.  
+Added: Multi-language support.
+Added: Greek language. 
+Added: German language.
+
+v0.14.76 (Mango)
+Added: Spanish language.
+
+v0.14.77 (Mango)
+Added: French language.
+Added: Slovak language.
+Changed: Some interface elements.
+
+v0.15.78 (Passion Fruit)
+Fixed: Language selection on disclaimer screen.
+Removed: Windows lock type.
+Added: Lock timer. Now you can set an extended lock delay (up to 360 minutes).
+Changed: Large code optimization to decrease memory footprint.
+Fixed: Minor language files corrections.
+Added: Function to prohibit key creation without verification.
+Changed: Donation links function.
+Added: Russian language.
+Fixed: Bug in reset default engine.
+
+v0.15.79 (Passion Fruit)
+Fixed: Minor bug on settings storage.
+Fixed: Major bug on language selection engine.
+Added: Polish language.
+
+v0.15.80 (Passion Fruit)
+Changed: Slovak language update.
+Added: Chinese language.
+
+v0.16.81 (Dragon Fruit)
+Added: Italian language.
+Fixed: Minor interface elements.
+Added: Option to store unlock key using computer name.
+
+v0.16.82 (Dragon Fruit)
+Added: Korean language.
+Added: Vietnamese language.
+Changed: Some visual controls.
+Added: Option to easy extract computer ID on password field.
+Changed:  Updates engine.
+
+v0.17.83 (Papaya)
+Fixed: Bug caused crash under unstable network connection.
+Improved: Screen support. Up to 6 screens are supported.
+Changed: Program credits.
+Added: Hungarian language.
+
+v0.18.85 (Pear)
+Update: Translation files.
+Fixed: Label sizes to display text correctly under any language. 
+Fixed: Bug caused windows shutdown blockage in some systems.
+Fixed: TLS connection issue on update engine.
+Change: Target framework is set to 4.7.2
+Fixed: Language reference on source code.
+Added: Function to add autorun information on USB media.
+Added: Function to work with lockID.
+Fixed: Minor bug causing malfunction when reading drives.
+
+v0.18.87 (Guava)
+Changed: Remote session stuff.
+Added: Turkish language.
+Added:  Portuguese/Brazilian language.
+Added:  Dutch language.
+
+v0.19.88 (Fig)
+Fixed: Security vulnerabilities.
+Added: More sounds for locking - unlocking events.
+Updated: Language packs.
+Changed: "Always start armed" option is locked if USB Raptor is not armed for better user protection. 
+Added: Lock screen image display option. 
+Improved: Settings saving function. 
+
+v0.19.90 (Cherry)
+Fixed: Bug on saving image settings.  
+Fixed: Bug on information window positioning
+Improved: Some language corrections.
+Added: Customization support for companies (under partner program).
+Added: Warning window for dangerous user selections. 
+Fixed: Lot of network routines improvements and sanitization.
+Improved: Keys override routine. Added option to select if Override button will be active.
+Added: Short help window on Prohibit keys creation pane. 
+Improved: Reset default routine.
+Changed: Disclaimer/Terms of Use.
+Fixed: Minor bugs on variable initialization.
+Improved: Error handling routines
+Added: GuardGoose service support.
+Fixed: Bug on unstable network connection.
+Removed: Dweet.io related routines as Dweet.io ceased operation (farewell).

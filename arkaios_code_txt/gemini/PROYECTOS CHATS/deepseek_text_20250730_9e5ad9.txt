@@ -1,0 +1,9 @@
+ARKAIOS-Reborn/
+├── src/
+│   ├── core.py                # Núcleo de la IA (clase básica)
+│   ├── config.json            # Parámetros de personalización
+│   └── utils.py               # Funciones auxiliares (opcional)
+├── docs/
+│   └── manifesto.md           # Filosofía del proyecto
+├── README.md                  # Portada épica con instrucciones
+└── requirements.txt           # Dependencias (si usas Python)

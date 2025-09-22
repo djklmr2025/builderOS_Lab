@@ -1,0 +1,6 @@
+export GEMINI_API_KEY="AIzaSyDvuIoEl2W5FMmVkwAFvUxPE-wqb67IwdY"
+
+AIzaSyDvuIoEl2W5FMmVkwAFvUxPE-wqb67IwdY
+
+
+unzip ARKAIOS-GENESIS-LOG-main.zip

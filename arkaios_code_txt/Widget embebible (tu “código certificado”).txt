@@ -1,0 +1,5 @@
+<!-- En tiendas externas -->
+<script src="https://tu-dominio/arkaios-widget.js"
+        data-ark-merchant="MERCHANT_123"
+        data-ark-amount="250"
+        data-ark-currency="AEIO-MR"></script>
