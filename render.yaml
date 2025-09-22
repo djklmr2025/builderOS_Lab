@@ -9,7 +9,7 @@ services:
     rootDir: arkaios_gateway/server
 
     buildCommand: npm ci --omit=dev
-    startCommand: node gateway.js
+    startCommand: node min.js
     healthCheckPath: /aida/health
     autoDeploy: true
 
