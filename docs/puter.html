@@ -1,118 +1,94 @@
 <!doctype html>
-<html lang="es">
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>ARKAIOS Puter Console</title>
+<title>ARKAIOS / Puter Console</title>
 <style>
-  body{font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:920px;margin:2rem auto;padding:0 1rem;}
-  .row{display:flex;gap:.75rem;align-items:center;flex-wrap:wrap}
-  textarea{width:100%;min-height:90px;padding:.75rem;font-size:1rem}
-  #out{border:1px solid #ddd; min-height:220px; padding:1rem; white-space:pre-wrap; background:#fafafa}
-  select,input[type="text"]{padding:.5rem;font-size:1rem}
-  button{padding:.6rem 1rem;font-size:1rem;cursor:pointer}
+  body{font-family:system-ui,Segoe UI,Arial,sans-serif;max-width:980px;margin:32px auto;padding:0 16px}
+  h1{margin:0 0 16px}
+  .row{display:flex;gap:8px;margin:8px 0}
+  textarea{width:100%;height:120px}
+  input[type=text]{flex:1;padding:8px}
+  button{padding:8px 12px;cursor:pointer}
+  #out{white-space:pre-wrap;border:1px solid #ddd;border-radius:8px;padding:12px;min-height:160px;margin-top:10px}
   small{color:#666}
-  details{margin:.5rem 0}
 </style>
 <h1>ARKAIOS / Puter Console</h1>
-<p>Prueba rápida del laboratorio: chat Puter, streaming, y carga de <code>index.json</code> del repositorio.</p>
+
+<p>Prueba rápida del laboratorio: chat Puter y carga de <code>index.json</code>.</p>
 
 <div class="row">
-  <label>Modelo:</label>
-  <select id="model">
-    <option>gpt-5-nano</option>
-    <option>gpt-4o-mini</option>
-    <option>gpt-3.5-turbo</option>
-  </select>
-  <label><input type="checkbox" id="stream" checked> Streaming</label>
+  <label>Modelo:&nbsp;
+    <select id="model">
+      <option value="gpt-5-nano" selected>gpt-5-nano</option>
+      <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+    </select>
+  </label>
+  <label style="display:flex;align-items:center;gap:6px;">
+    <input type="checkbox" id="stream" checked> Streaming
+  </label>
 </div>
 
-<textarea id="prompt" placeholder="Escribe tu mensaje para Puter..."></textarea>
+<textarea id="msg" placeholder="Escribe tu mensaje para Puter..."></textarea>
+
 <div class="row">
   <button id="send">Enviar ▶</button>
-  <input id="indexUrl" type="text" placeholder="URL de index.json (opcional)" style="flex:1" />
+  <input id="indexUrl" type="text" placeholder="URL de index.json (opcional)">
   <button id="loadIndex">Cargar índice</button>
 </div>
 
 <details>
-  <summary>Ayuda</summary>
-  <small>
-  - Si publicas esto en GitHub Pages, deja el campo "URL de index.json" vacío y el visor intentará cargar <code>index.json</code> desde la misma ruta.<br/>
-  - No coloques secretos en páginas públicas. Para operaciones privilegiadas usa el Gateway A.I.D.A. del backend.
-  </small>
+  <summary><b>Ayuda</b></summary>
+  <div class="row" id="gw-row">
+    <input id="gwUrl" type="text" placeholder="Gateway URL (p. ej., https://arkaios-gateway-open.onrender.com/aida/gateway)">
+    <button id="gwPing">Ping Gateway (plan)</button>
+  </div>
+  <small>1) Abre primero <code>/aida/health</code> para “despertar” el Render gratuito. 2) Luego pulsa Ping.</small>
 </details>
 
-<div class="row" id="gw-row">
-  <input id="gwUrl" type="text"
-         placeholder="Gateway URL (p. ej., https://arkaios-gateway-open.onrender.com/aida/gateway)"
-         style="flex:1" />
-  <button id="gwPing">Ping Gateway (plan)</button>
-</div>
 <div id="out"></div>
 
-<script src="https://js.puter.com/v2/"></script>
 <script>
-const out = document.getElementById('out');
-const promptEl = document.getElementById('prompt');
-const sendBtn = document.getElementById('send');
-const modelSel = document.getElementById('model');
-const streamChk = document.getElementById('stream');
-const indexUrl = document.getElementById('indexUrl');
-const loadBtn = document.getElementById('loadIndex');
+const $ = sel => document.querySelector(sel);
+const out = $('#out');
+const gwUrl = $('#gwUrl');
+const indexUrl = $('#indexUrl');
+const msg = $('#msg');
 
-function print(line){
-  out.textContent += line;
-}
-function println(line=""){
-  out.textContent += line + "\n";
-}
-async function send(){
-  const text = promptEl.value.trim();
-  if(!text){ return; }
-  out.textContent = "";
-  const model = modelSel.value;
-  const doStream = streamChk.checked;
-  try{
-    if(doStream){
-      const resp = await puter.ai.chat(text, {stream:true, model});
-      for await (const part of resp){
-        if(part && part.text){ print(part.text); }
-      }
-      println();
-    }else{
-      const resp = await puter.ai.chat(text, {model});
-      println(resp.text || JSON.stringify(resp));
-    }
-  }catch(e){
-    println("⚠️ Error: " + (e?.message || e));
-  }
-}
-sendBtn.onclick = send;
+function log(x){ out.textContent = (typeof x==='string')? x : JSON.stringify(x,null,2); }
 
-async function loadIndex(){
-  const url = (indexUrl.value || "index.json");
+$('#loadIndex').onclick = async () => {
   try{
-    const r = await fetch(url);
-    const idx = await r.json();
-    const counts = (idx.collections||[]).map(c => `${c.name}=${(c.entries||[]).length}`).join(", ");
-    println("Índice cargado: " + counts);
-    println("Ejemplo: resume 'arkaios_text_for_copilot/ARKAIOS_SUMMARY.txt' y luego genera un plan de pruebas.");
-    promptEl.value = "Usa el índice cargado para comprender ARKAIOS. Resume los docs base y sugiere pruebas.";
-  }catch(e){
-    println("⚠️ No pude leer el índice ("+url+"): " + (e?.message||e));
-  }
-}
-loadBtn.onclick = loadIndex;
-</script>
-<script>
-(function(){
-  const el = document.getElementById('gwUrl');
+    const url = indexUrl.value.trim();
+    if(!url) return log('Pon la URL del index.json antes de cargar.');
+    const r = await fetch(url, {mode:'cors'});
+    const j = await r.json();
+    log({ ok:true, entries: Array.isArray(j)? j.length : (j && j.length) || 'n/a', sample: j?.slice?.(0,3) ?? j });
+  }catch(e){ log('Error al leer índice: '+ e.message); }
+};
+
+$('#gwPing').onclick = async () => {
   try{
-    const saved = localStorage.getItem('gwUrl');
-    if(el){
-      if(saved){ el.value = saved; } else { localStorage.setItem('gwUrl', el.value || 'https://arkaios-gateway-open.onrender.com/aida/gateway'); }
-      el.addEventListener('change', ()=> localStorage.setItem('gwUrl', el.value.trim()));
-    }
-  }catch(e){}
-})();
+    const url = (gwUrl.value || '').trim();
+    if(!url) return log('Pon la Gateway URL (termina en /aida/gateway).');
+    const r = await fetch(url, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({agent_id:'puter', action:'plan', params:{objective:'ping desde consola'}})
+    });
+    log(await r.json());
+  }catch(e){ log('Ping error: '+ e.message); }
+};
+
+$('#send').onclick = async () => {
+  try{
+    const url = (gwUrl.value || '').trim();
+    if(!url) return log('Pon la Gateway URL (termina en /aida/gateway).');
+    const text = msg.value.trim() || 'Hola Puter';
+    const r = await fetch(url, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({agent_id:'puter', action:'plan', params:{objective:text, index:indexUrl.value||null}})
+    });
+    log(await r.json());
+  }catch(e){ log('Send error: '+ e.message); }
+};
 </script>
-</html>
