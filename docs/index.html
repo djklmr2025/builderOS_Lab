@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="es">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>ARKAIOS / BuilderOS — Índice</title>
+<h1>ARKAIOS / BuilderOS — Índice</h1>
+<pre id="out">Cargando index.json...</pre>
+<script>
+fetch('index.json').then(r=>r.json()).then(idx=>{
+  const out=document.getElementById('out');
+  const lines=[];
+  lines.push(`generated: ${idx.generated}\n`);
+  for(const c of idx.collections||[]){
+    const n=(c.entries||[]).length;
+    lines.push(`## ${c.name} (${n})`);
+    for(const e of (c.entries||[]).slice(0,200)){
+      lines.push(`- ${e.path}  [${e.kind}]  (${e.size} bytes)`);
+    }
+    if(n>200) lines.push(`... +${n-200} más`);
+    lines.push('');
+  }
+  out.textContent=lines.join('\n');
+}).catch(err=>{
+  out.textContent='Error leyendo index.json: '+err;
+});
+</script>
+</html>
