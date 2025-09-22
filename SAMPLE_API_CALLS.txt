@@ -1,0 +1,24 @@
+cURL (salud):
+  curl -i http://HOST:PORT/aida/health
+
+cURL (gateway con auth):
+  curl -s -X POST http://HOST:PORT/aida/gateway \
+    -H "Authorization: Bearer $SECRET_MASTER_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{"agent_id":"puter","action":"request_file","target":"lib/core/alpha.py"}'
+
+Node (fetch):
+  await fetch("http://HOST:PORT/aida/gateway", {
+    method: "POST",
+    headers: {
+      "Authorization": "Bearer " + process.env.SECRET_MASTER_TOKEN,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({"agent_id":"puter","action":"generate","kind":"report","params":{"topic":"ARKAIOS"}})
+  }).then(r=>r.json());
+
+JS (stream con puter):
+  async function stream() {
+    const r = await puter.ai.chat("stream test", {stream:true, model:"gpt-5-nano"});
+    for await (const part of r) console.log(part?.text);
+  }

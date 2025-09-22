@@ -1,0 +1,23 @@
+Usar puter.js en frontend (o bridge en backend)
+
+Script (HTML):
+  <script src="https://js.puter.com/v2/"></script>
+
+Llamada básica:
+  puter.ai.chat("Hola puter", { model: "gpt-5-nano" })
+    .then(r => puter.print(r));
+
+Streaming (JS):
+  async function demo() {
+    const resp = await puter.ai.chat("Explica ARKAIOS", {stream:true, model:"gpt-5-nano"});
+    for await (const part of resp) puter.print(part?.text);
+  }
+
+Txt2Img:
+  puter.ai.txt2img("Un laboratorio virtual para AIs")
+    .then(img => document.body.appendChild(img));
+
+Notas
+- Configurar CORS/CSP para permitir js.puter.com si hay UI.
+- Si se usa solo backend, crear un “bridge”/wrapper que hable con A.I.D.A. y traduzca llamadas a Puter Agent.
+- Ver documentación pública actualizada en developer.puter.com (modelos soportados, parámetros, streaming).

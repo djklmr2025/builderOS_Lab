@@ -1,0 +1,19 @@
+Inicio rápido
+- Pre-requisitos: Docker/Docker Compose, dominio o túnel (ngrok/Caddy), SECRET_MASTER_TOKEN definido.
+- Arranque: docker compose up --build
+- Verificar salud: curl -i http://HOST:PORT/aida/health
+
+Orden de chequeo cuando algo falla
+1) Procesos
+   - docker ps
+   - ps aux | grep aida
+2) Logs (tail rotativo)
+   - tail -n 200 /var/log/arkaios/gateway.log
+   - tail -n 200 /var/log/nginx/error.log
+3) Red/Proxy
+   - curl -I https://TU_DOMINIO/arkaios/<token>/ping
+   - Revisar proxy_read_timeout / websockets habilitados
+4) Tokens
+   - Verificar SECRET_MASTER_TOKEN en servidor y cliente (coinciden)
+5) Storage/Permisos
+   - ls -la /opt/arkaios/storage (escritura habilitada)

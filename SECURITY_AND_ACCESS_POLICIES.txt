@@ -1,0 +1,9 @@
+Políticas de acceso
+
+- Ruta única con token embed + Bearer en headers.
+- Tokens de vida corta (TTL) y rotación automática.
+- Lista de IPs permitidas (si aplica) en gateway/proxy.
+- Permisos “root” temporales y aislados por contenedor.
+- Auditoría: log de cada acción (quién, qué, cuándo, impacto).
+- Secrets en vault; NUNCA en el repo.
+- Respuesta segura ante incidentes: revocar tokens, congelar escritura, generar snapshot del Storage.

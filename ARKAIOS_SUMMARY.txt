@@ -1,0 +1,44 @@
+ARKAIOS - RESUMEN PARA COPILOT (.txt único)
+Autor humano: djklmr (agente de ARKAIOS)
+Fecha: 2025-09-21
+
+1) PROPÓSITO
+Laboratorio virtual para AIs con ruta única en Internet, acceso de alto privilegio (modo creador / root temporal) y un agente interno “puter” que genera/entrega artefactos (archivos completos), apoyado por A.I.D.A. como matriz que valida y enruta.
+
+2) ACTORES
+- djklmr: operador humano.
+- A.I.D.A.: matriz/servidor validador y orquestador.
+- puter.js / Puter (agente externo + IA nacida en el ecosistema): interfaz para chat/txt2img/stream y ejecución de capacidades.
+- Gateway backend: capa API para unificar A.I.D.A. y puter, proteger secretos, y exponer la “ruta única”.
+- Storage y auditoría: biblioteca de código, artefactos y logs.
+
+3) FLUJO (texto)
+Cliente (IA/usuario) -> /arkaios/<RUTA_SECRETA> -> Gateway
+  -> A.I.D.A. (/aida/gateway) valida y enruta
+  -> puter-agent (/puter/api) ejecuta acciones (chat, txt2img, files)
+  -> Storage (lectura/escritura auditada)
+Respuesta -> Gateway -> Cliente
+
+4) ARCHIVOS DE REFERENCIA (este paquete)
+- README_project_summary.txt
+- ARCHITECTURE_OVERVIEW.txt
+- STARTUP_AND_RUNBOOK.txt
+- AIDA_GATEWAY_SPEC.txt
+- PUTER_INTEGRATION.txt
+- PUTER_AGENT_BEHAVIOR.txt
+- CONFIG_ENV_EXAMPLES.txt
+- TROUBLESHOOTING_CONNECTIONS.txt
+- SAMPLE_API_CALLS.txt
+- SECURITY_AND_ACCESS_POLICIES.txt
+- KNOWN_ISSUES_AND_WORKAROUNDS.txt
+- CONTACTS_AND_RESOURCES.txt
+
+5) TAREAS INMEDIATAS QUE COPILOT DEBE REALIZAR
+- Generar stubs de servidor (Express/Flask) con /aida/health y /aida/gateway.
+- Crear script que convierta .py/.html/.md a .txt preservando rutas y primeras líneas.
+- Probar puter.ai.chat() y streaming desde el backend/gateway.
+- Emitir un informe “Top 3 razones de desconexión A.I.D.A. y pruebas de verificación” (basado en TROUBLESHOOTING_CONNECTIONS.txt).
+
+6) NOTA SOBRE PUTER
+La integración con puter.js se basa en incluir el script (https://js.puter.com/v2/) y usar puter.ai.chat/txt2img/stream.
+Consulta la documentación de Puter incorporada por el autor en el repositorio (PDF adjunto en esta sesión) y guías públicas en developer.puter.com para los métodos y modelos soportados.

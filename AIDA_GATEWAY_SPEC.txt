@@ -1,0 +1,24 @@
+Especificación de API: A.I.D.A. Gateway
+
+1) GET /aida/health
+- 200 OK -> {"status":"ok","ts":"<ISO>"} 
+
+2) POST /aida/gateway
+Headers:
+  - Authorization: Bearer <SECRET_MASTER_TOKEN>
+  - Content-Type: application/json
+Body (ejemplos):
+  a) Solicitud de archivo:
+     {"agent_id":"puter","action":"request_file","target":"lib/core/alpha.py"}
+  b) Generar artefacto:
+     {"agent_id":"puter","action":"generate","kind":"report","params":{"topic":"X"}}
+
+Respuestas (ejemplo):
+  - 200 OK -> {"status":"ok","payload":"<texto|base64|url>","log_id":"..."}
+  - 401 Unauthorized / 403 Forbidden
+  - 422 Unprocessable (validación A.I.D.A.)
+  - 500 Error interno
+
+Notas de seguridad
+- A.I.D.A. aplica políticas (ACL) por acción/target.
+- Tokens de vida corta (TTL configurable) y lista denegación por IP si aplica.

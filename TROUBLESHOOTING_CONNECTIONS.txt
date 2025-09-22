@@ -1,0 +1,20 @@
+Checklist de desconexión A.I.D.A./Puter
+
+1) ¿A.I.D.A. arriba?
+   - curl -i http://HOST:PORT/aida/health -> 200 OK
+2) ¿Tokens correctos?
+   - Cliente usa Bearer idéntico a SECRET_MASTER_TOKEN del servidor
+3) ¿Proxy conserva Authorization y soporta streaming?
+   - Revisar Nginx/Caddy: headers, proxy_read_timeout >= 3600, websockets on
+4) ¿CORS/CSP bloquea js.puter.com?
+   - Añadir js.puter.com en allow-list de script-src/connect-src
+5) ¿Egress saliente cortado?
+   - puter.js necesita llegar a endpoints externos; si no, proveer bridge local
+6) ¿FS permisos?
+   - Storage en RW para el agente puter cuando genere archivos
+7) Logs a revisar:
+   - /var/log/arkaios/gateway.log
+   - /var/log/nginx/error.log
+   - /var/log/arkaios/puter-agent.log
+8) DNS/ruta única
+   - dig/host a TU_DOMINIO apunta al servidor correcto

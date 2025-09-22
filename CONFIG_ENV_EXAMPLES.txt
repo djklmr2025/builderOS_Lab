@@ -1,0 +1,14 @@
+Variables de entorno (ejemplo)
+
+HOST=0.0.0.0
+PORT=8080
+SECRET_MASTER_TOKEN=coloca_un_valor_largo_y_aleatorio
+AIDA_URL=http://localhost:8080/aida/gateway
+PUTER_JS_URL=https://js.puter.com/v2/
+STORAGE_URI=/opt/arkaios/storage
+ADMIN_KEYS=key1,key2,key3
+LOG_DIR=/var/log/arkaios
+
+# Proxy/TimeOuts sugeridos (si aplican)
+PROXY_READ_TIMEOUT=3600
+WS_ENABLED=true
