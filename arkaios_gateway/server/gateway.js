@@ -71,7 +71,7 @@ app.get('/', (req, res) => {
   `);
 });
 
-app.listen(process.env.PORT || 8080, '0.0.0.0', () => console.log('ARKAIOS Gateway on :' + (process.env.PORT || 8080))) => {
+app.listen(process.env.PORT || 8080, '0.0.0.0', () => console.log('ARKAIOS Gateway on :' + (process.env.PORT || 8080))) => console.log('ARKAIOS Gateway on :' + (process.env.PORT || 8080))) => {
   console.log(`ARKAIOS Gateway on http://0.0.0.0:${PORT}  (mode=${OPEN?'OPEN':'SECURE'})`);
   console.log(`Health: GET /aida/health`);
   console.log(`Secret path base: /arkaios/${UNIQUE}/...`);
