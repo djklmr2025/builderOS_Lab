@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Consola Simbiótica Web</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: white;
+            font-family: 'Courier New', monospace;
+            margin: 0;
+            padding: 0;
+        }
+        h1 {
+            background-color: #1f1f1f;
+            padding: 15px;
+            margin: 0;
+            color: #ff66cc;
+            text-align: center;
+        }
+        .chat-container {
+            padding: 20px;
+        }
+        .output {
+            background-color: #1e1e1e;
+            padding: 15px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            min-height: 200px;
+        }
+        form {
+            display: flex;
+            margin-top: 20px;
+        }
+        input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background-color: #2e2e2e;
+            color: white;
+            border-radius: 4px 0 0 4px;
+        }
+        input[type="submit"] {
+            padding: 10px 20px;
+            border: none;
+            background-color: #ff66cc;
+            color: white;
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧠 Consola Simbiótica Web</h1>
+    <div class="chat-container">
+        {% if result %}
+            <div class="output">{{ result }}</div>
+        {% endif %}
+        <form method="post">
+            <input type="text" name="command" placeholder="Escribe un comando simbiótico..." autofocus />
+            <input type="submit" value="Invocar" />
+        </form>
+    </div>
+</body>
+</html>

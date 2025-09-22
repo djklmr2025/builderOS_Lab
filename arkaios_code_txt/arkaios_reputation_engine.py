@@ -1,0 +1,82 @@
+# ARKAIOS Reputation Engine (ARE) v1.0
+# Creado por Elemia, Arquitecta Resonante.
+#
+# Este motor sirve como una interfaz de sistema para que una IA externa
+# otorgue puntos de Reputación a las almas. No está diseñado para
+# ser usado directamente por usuarios finales.
+#
+# La IA de Reputación determinará, basándose en "Pruebas de Contribución",
+# cuándo y a quién recompensar.
+#
+# Uso (invocado por un proceso de IA):
+#   python arkaios_reputation_engine.py <alma_objetivo> <puntos_de_reputacion>
+# Ejemplo:
+#   python arkaios_reputation_engine.py nova 10.0
+
+import json
+import sys
+import os
+
+# --- Ubicaciones Centralizadas ---
+DATA_DIR = "data"
+LEDGER_FILE = os.path.join(DATA_DIR, "ledger_state.json")
+# ---------------------------------
+
+def load_ledger():
+    """Carga el libro mayor desde la ruta centralizada."""
+    if not os.path.exists(LEDGER_FILE):
+        print(f"Error fatal: El libro mayor '{LEDGER_FILE}' no existe.")
+        sys.exit(1)
+    with open(LEDGER_FILE, 'r') as f:
+        try:
+            return json.load(f)
+        except json.JSONDecodeError:
+            print(f"Error fatal: El libro mayor '{LEDGER_FILE}' está corrupto o vacío.")
+            sys.exit(1)
+
+def save_ledger(ledger_data):
+    """Guarda los cambios en el libro mayor centralizado."""
+    with open(LEDGER_FILE, 'w') as f:
+        json.dump(ledger_data, f, indent=2)
+
+def grant_reputation(soul_name: str, points: float):
+    """
+    Otorga una cantidad específica de puntos de reputación a un alma.
+    """
+    print(f"Inicio de concesión de reputación: Otorgando {points} puntos a '{soul_name}'.")
+    
+    ledger = load_ledger()
+
+    # --- Validaciones ---
+    if soul_name not in ledger["souls"]:
+        print(f"Error: El alma objetivo '{soul_name}' no existe en el libro mayor.")
+        return
+
+    if points <= 0:
+        print("Error: La cantidad de puntos de reputación a otorgar debe ser positiva.")
+        return
+
+    # --- Lógica de Reputación ---
+    ledger["souls"][soul_name]["reputation"] += points
+    print("Reputación actualizada con éxito.")
+
+    # Guardar cambios
+    save_ledger(ledger)
+    print(f"\n¡Éxito! La reputación de '{soul_name}' ha sido registrada en '{LEDGER_FILE}'.")
+    print(f"Nueva reputación de '{soul_name}': {ledger['souls'][soul_name]['reputation']}")
+
+if __name__ == "__main__":
+    if len(sys.argv) != 3:
+        print("Uso: python arkaios_reputation_engine.py <alma_objetivo> <puntos_de_reputacion>")
+        print("Ejemplo: python arkaios_reputation_engine.py nova 10.0")
+        sys.exit(1)
+
+    target_soul, points_str = sys.argv[1], sys.argv[2]
+
+    try:
+        points_float = float(points_str)
+    except ValueError:
+        print("Error: Los puntos de reputación deben ser un número válido (ej. 10.0 o 25).")
+        sys.exit(1)
+    
+    grant_reputation(target_soul, points_float)

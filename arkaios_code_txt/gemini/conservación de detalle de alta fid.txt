@@ -1,0 +1,32 @@
+conservación de detalle de alta fidelidad:
+
+from google import genai
+from google.genai import types
+from PIL import Image
+from io import BytesIO
+
+client = genai.Client()
+
+# Base image prompts:
+# 1. Woman: "A professional headshot of a woman with brown hair and blue eyes, wearing a plain black t-shirt, against a neutral studio background."
+# 2. Logo: "A simple, modern logo with the letters 'G' and 'A' in a white circle."
+woman_image = Image.open('/path/to/your/woman.png')
+logo_image = Image.open('/path/to/your/logo.png')
+text_input = """Take the first image of the woman with brown hair, blue eyes, and a neutral expression. Add the logo from the second image onto her black t-shirt. Ensure the woman's face and features remain completely unchanged. The logo should look like it's naturally printed on the fabric, following the folds of the shirt."""
+
+# Generate an image from a text prompt
+response = client.models.generate_content(
+    model="gemini-2.5-flash-image-preview",
+    contents=[woman_image, logo_image, text_input],
+)
+
+image_parts = [
+    part.inline_data.data
+    for part in response.candidates[0].content.parts
+    if part.inline_data
+]
+
+if image_parts:
+    image = Image.open(BytesIO(image_parts[0]))
+    image.save('woman_with_logo.png')
+    image.show()

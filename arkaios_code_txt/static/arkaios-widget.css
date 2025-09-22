@@ -1,0 +1,9 @@
+/* static/arkaios-widget.css */
+.ark-modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:99999}
+.ark-modal{width:min(420px,92vw);background:#0d1a28;color:#e6f1ff;border:1px solid #14314f;border-radius:12px;padding:16px;font-family:system-ui,Segoe UI,Roboto}
+.ark-modal h3{margin:0 0 8px;font-size:18px}
+.ark-modal label{display:block;margin:10px 0 6px;color:#9fb4d3}
+.ark-modal input{width:100%;padding:10px;border-radius:8px;border:1px solid #14314f;background:#0b1622;color:#e6f1ff}
+.ark-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+.ark-btn{padding:10px 14px;border-radius:10px;border:1px solid #14314f;background:#102235;color:#e6f1ff;cursor:pointer}
+.ark-btn.primary{background:#00e1a3;color:#001b12;border:none}

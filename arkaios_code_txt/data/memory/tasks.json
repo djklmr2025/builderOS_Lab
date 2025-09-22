@@ -1,0 +1,12 @@
+{
+  "tasks": [
+    {
+      "id": "hello",
+      "title": "Tarea de ejemplo: di 'hola' al iniciar",
+      "status": "open",
+      "created_at": "2025-08-30T23:36:08.911711Z",
+      "seen": true,
+      "seen_at": "2025-08-31T00:06:40.331991Z"
+    }
+  ]
+}
