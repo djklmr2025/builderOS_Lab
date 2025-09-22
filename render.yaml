@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: arkaios-gateway-open
+    env: node
+    plan: free             # usa "starter" o superior si lo quieres 24/7 sin dormir
+    rootDir: arkaios_gateway/server
+    buildCommand: npm install
+    startCommand: node gateway.js
+    healthCheckPath: /aida/health
+    autoDeploy: true
+    envVars:
+      - key: OPEN_MODE
+        value: "1"
+      - key: PUBLIC_ACTIONS
+        value: "echo,plan,analyze,explain,generate"
+      - key: ALLOW_ORIGIN
+        value: "https://djklmr2025.github.io"
+      - key: UNIQUE_PATH_TOKEN
+        generateValue: true    # Render generará un valor aleatorio
+      # SECRET_MASTER_TOKEN NO es necesario en OPEN_MODE; si luego activas SECURE MODE, añádelo como secret.
