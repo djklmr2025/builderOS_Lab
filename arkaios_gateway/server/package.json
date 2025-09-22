@@ -1,0 +1,20 @@
+{
+  "name": "arkaios-gateway-open",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "node gateway.js",
+    "dev": "node gateway.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.1.5",
+    "morgan": "^1.10.0"
+  },
+  "main": "gateway.js",
+  "engines": {
+    "node": ">=20"
+  }
+}

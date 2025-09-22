@@ -1,11 +1,11 @@
 // ARKAIOS Gateway — OPEN MODE (sin bearer para acciones de texto seguras)
-import express from 'express';
-import cors from 'cors';
-import morgan from 'morgan';
-import dotenv from 'dotenv';
+const express=require("express")
+const cors=require("cors")
+const morgan=require("morgan")
+const dotenv=require("dotenv")
 import rateLimit from 'express-rate-limit';
 
-dotenv.config();
+require("dotenv").config()
 
 const app = express();
 app.set('trust proxy', 1);
