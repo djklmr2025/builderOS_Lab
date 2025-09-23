@@ -1,24 +1,45 @@
 services:
+  # ---------- OPEN / Explorador ----------
   - type: web
     name: arkaios-gateway-open
     env: node
     plan: free
     region: oregon
-
-    # 👇 muy importante: Render hará build/start dentro de esta carpeta
     rootDir: arkaios_gateway/server
-
     buildCommand: npm ci --omit=dev
     startCommand: node gateway.js
     healthCheckPath: /aida/health
     autoDeploy: true
-
     envVars:
       - key: RENDER_NODE_VERSION
         value: "20"
       - key: OPEN_MODE
         value: "1"
+      - key: PUBLIC_ACTIONS
+        value: "echo,plan,analyze,explain,generate,read,awaken"
       - key: RATE_LIMIT
         value: "0"
       - key: ALLOW_ORIGIN
         value: "https://djklmr2025.github.io"
+
+  # ---------- SECURE / Builder ----------
+  - type: web
+    name: arkaios-gateway-secure
+    env: node
+    plan: free
+    region: oregon
+    rootDir: arkaios_gateway/server
+    buildCommand: npm ci --omit=dev
+    startCommand: node gateway.js
+    healthCheckPath: /aida/health
+    autoDeploy: true
+    envVars:
+      - key: RENDER_NODE_VERSION
+        value: "20"
+      - key: OPEN_MODE
+        value: "0"
+      - key: RATE_LIMIT
+        value: "0"
+      - key: ALLOW_ORIGIN
+        value: "https://djklmr2025.github.io"
+      # añade el MASTER_TOKEN en el panel de Render (Secrets), no aquí
