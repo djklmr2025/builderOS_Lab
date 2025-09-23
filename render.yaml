@@ -1,5 +1,4 @@
 services:
-  # ---------- OPEN / Explorador ----------
   - type: web
     name: arkaios-gateway-open
     env: node
@@ -22,7 +21,6 @@ services:
       - key: ALLOW_ORIGIN
         value: "https://djklmr2025.github.io"
 
-  # ---------- SECURE / Builder ----------
   - type: web
     name: arkaios-gateway-secure
     env: node
@@ -42,4 +40,4 @@ services:
         value: "0"
       - key: ALLOW_ORIGIN
         value: "https://djklmr2025.github.io"
-      # añade el MASTER_TOKEN en el panel de Render (Secrets), no aquí
+      # El MASTER_TOKEN se agrega desde el panel de Render (secreto), no aquí
