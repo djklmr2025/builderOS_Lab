@@ -2,6 +2,7 @@ const express = require('express')
 const cors = require('cors')
 const morgan = require('morgan')
 require('dotenv').config()
+const ALLOWED_HOSTS = (process.env.ALLOWED_HOSTS || 'djklmr2025.github.io,raw.githubusercontent.com,githubusercontent.com,github.io').split(',').map(x=>x.trim().toLowerCase())
 
 const app = express()
 app.set('trust proxy', true)
@@ -47,3 +48,40 @@ app.post('/aida/gateway', async (req, res) => {
 
 const PORT = process.env.PORT || 8080
 app.listen(PORT, '0.0.0.0', () => console.log('ARKAIOS Gateway on :' + PORT))
+
+async function safeRead(target){
+  let url = target
+  if(!/^https?:\/\//i.test(url)){
+    // si piden "index.json" o rutas relativas, redirige a GitHub Pages
+    url = 'https://djklmr2025.github.io/builderOS_Lab/' + target.replace(/^\/+/, '')
+  }
+  const u = new URL(url)
+  const host = u.hostname.toLowerCase()
+  if(!ALLOWED_HOSTS.some(h => host.endsWith(h))){
+    throw new Error('host_not_allowed: ' + host)
+  }
+  const r = await fetch(url, { headers:{ 'User-Agent':'ARKAIOS-Gateway/1.0' }})
+  const ct = (r.headers.get('content-type')||'').toLowerCase()
+  const body = ct.includes('application/json') ? await r.json() : await r.text()
+  return { url, contentType: ct, body }
+}
+
+let AWAKE_STATE = { active:false, role:null, ts:null }
+
+ACTIONS.read = async (p={})=>{
+  const target = p.target || 'index.json'
+  return await safeRead(target)
+}
+
+ACTIONS.awaken = async (p={})=>{
+  AWAKE_STATE = { active:true, role: p.role||'engineer', ts:new Date().toISOString() }
+  return { ok:true, state: AWAKE_STATE }
+}
+
+function isAllowedAction(action){
+  const open = process.env.OPEN_MODE === '1'
+  const publicActions = (process.env.PUBLIC_ACTIONS || 'echo,plan,analyze,explain,generate,read,awaken').split(',').map(x=>x.trim())
+  if(open) return publicActions.includes(action)
+  // modo seguro: requiere token y permite todo lo definido en ACTIONS
+  return !!ACTIONS[action]
+}
