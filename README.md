@@ -2,6 +2,34 @@
 
 [![ARKAIOS CI](https://github.com/djklmr2025/builderOS_Lab/actions/workflows/arkaios-ci.yml/badge.svg)](https://github.com/djklmr2025/builderOS_Lab/actions/workflows/arkaios-ci.yml)
 
+## 🔧 Validación automática
+
+### 1) Diagnóstico rápido
+- **Bash**: `./scripts/quick_diag.sh`
+- **PowerShell**: `pwsh -File scripts/quick_diag.ps1`
+
+### 2) Smoke de módulos locales
+- Todos los módulos (con logging):  
+  `python scripts/run_module.py`
+- Uno específico:  
+  `python scripts/run_module.py prometeo`
+
+> Los resultados quedan en `logs/diagnostics.log`.
+
+### 3) Simbiosis Puter ↔ Copilot
+- `python scripts/symbiosis_test.py`  
+  Valida `/aida/health`, `plan` y `read` sobre `index.json`.
+
+### 4) CI diario (GitHub Actions)
+Status:  
+[![ARKAIOS CI](https://github.com/djklmr2025/builderOS_Lab/actions/workflows/arkaios-ci.yml/badge.svg)](https://github.com/djklmr2025/builderOS_Lab/actions/workflows/arkaios-ci.yml)
+
+El CI:
+1. Arranca y hace *smoketest* de `core/prometeo/awakener/convergence`.
+2. Verifica que `index.json` de GitHub Pages exista y tenga `collections`.
+3. “Despierta” Render y prueba `echo` + `plan` en `/aida/gateway`.
+4. Publica artefactos con las respuestas.
+
 
 > **Nodo de conocimiento y orquestación para IAs**
 
