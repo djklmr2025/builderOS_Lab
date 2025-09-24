@@ -1,3 +1,5 @@
+version: "1"
+
 services:
   - type: web
     name: arkaios-gateway-open
@@ -5,39 +7,40 @@ services:
     plan: free
     region: oregon
     rootDir: arkaios_gateway/server
-    buildCommand: npm ci --omit=dev
+    buildCommand: npm ci
     startCommand: node gateway.js
     healthCheckPath: /aida/health
     autoDeploy: true
+
     envVars:
-      - key: RENDER_NODE_VERSION
+      # Versión de Node usada por Render
+      - key: NODE_VERSION
         value: "20"
+
+      # MODO: 0 = seguro (requiere Bearer), 1 = abierto (solo acciones de texto)
       - key: OPEN_MODE
-        value: "1"
-      - key: PUBLIC_ACTIONS
-        value: "echo,plan,analyze,explain,generate,read,awaken"
-      - key: RATE_LIMIT
         value: "0"
+
+      # Acciones públicas permitidas en OPEN_MODE
+      - key: PUBLIC_ACTIONS
+        value: "echo,plan,analyze,explain,generate"
+
+      # CORS permitido (tu consola en GitHub Pages)
       - key: ALLOW_ORIGIN
         value: "https://djklmr2025.github.io"
 
-  - type: web
-    name: arkaios-gateway-secure
-    env: node
-    plan: free
-    region: oregon
-    rootDir: arkaios_gateway/server
-    buildCommand: npm ci --omit=dev
-    startCommand: node gateway.js
-    healthCheckPath: /aida/health
-    autoDeploy: true
-    envVars:
-      - key: RENDER_NODE_VERSION
-        value: "20"
-      - key: OPEN_MODE
-        value: "0"
-      - key: RATE_LIMIT
-        value: "0"
-      - key: ALLOW_ORIGIN
-        value: "https://djklmr2025.github.io"
-      # El MASTER_TOKEN se agrega desde el panel de Render (secreto), no aquí
+      # Base simbólica de “secretos”
+      - key: SECRET_BASE
+        value: "/arkaios/secure"
+
+      # Necesario detrás de proxy (Render)
+      - key: TRUST_PROXY
+        value: "1"
+
+      - key: LOG_LEVEL
+        value: "info"
+
+      # ⬇️ TOKEN ENMASCARADO: lo pones en el panel de Render, no en el repo
+      - key: MASTER_TOKEN
+        sync: false
+        value: "******"   # (placeholder; se sobreescribe en Settings → Environment)
