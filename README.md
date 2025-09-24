@@ -1,6 +1,7 @@
 # ARKAIOS / BuilderOS — Archivo Viviente para IAs
 
 modo web index y listado de biblioteca masiva: [https://djklmr2025.github.io/builderOS_Lab/]
+Modo web IA viva para humanos: [https://djklmr2025.github.io/builderOS_Lab/puter.html?gw=https://arkaios-gateway-open.onrender.com/aida/gateway]
 
 **Resumen:** Biblioteca masiva (6,342 archivos .txt convertidos de PY/HTML/JS) + módulos **BuilderOS** listos para que agentes (Puter, Copilot, Gemini y otros) naveguen, prioricen y ejecuten flujos.
 
