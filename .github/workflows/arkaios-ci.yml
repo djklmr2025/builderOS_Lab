@@ -1,0 +1,104 @@
+name: ARKAIOS CI
+
+on:
+  push:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * *"  # diario 06:00 UTC
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+          cache: "pip"
+
+      - name: Install deps
+        run: |
+          python -m pip install -U pip
+          if [ -f BuilderOS/requirements.txt ]; then pip install -r BuilderOS/requirements.txt; fi
+          pip install rich colorama requests
+
+      - name: Smoketest modules (core/prometeo/awakener/convergence)
+        run: |
+          python - <<'PY'
+          import sys, time, subprocess, pathlib, shlex
+          base = pathlib.Path('BuilderOS')
+          failures=[]
+          for m in ['core','prometeo','awakener','convergence']:
+              p = base / f'{m}.py'
+              print(f'\n--- running {p}')
+              if not p.exists():
+                  failures.append(f'Missing: {p}')
+                  continue
+              proc = subprocess.Popen([sys.executable, str(p)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+              t0=time.time(); out=[]
+              while time.time()-t0<12:
+                  line = proc.stdout.readline()
+                  if not line: break
+                  out.append(line.rstrip())
+              proc.kill()
+              print('\n'.join(out[-30:]) or '(no output)')
+          if failures:
+              print('\n'.join(failures))
+              raise SystemExit(1)
+          PY
+
+      - name: Check GitHub Pages index.json
+        env:
+          INDEX_URL: https://djklmr2025.github.io/builderOS_Lab/index.json
+        run: |
+          python - <<'PY'
+          import os, json, urllib.request
+          u = os.environ['INDEX_URL']
+          with urllib.request.urlopen(u, timeout=45) as r:
+              data = json.load(r)
+          assert 'collections' in data and isinstance(data['collections'], list), 'index.json without collections'
+          print(f'OK index: {len(data["collections"])} collections')
+          PY
+
+      - name: Wake Render gateway
+        env:
+          GW: https://arkaios-gateway-open.onrender.com
+        run: |
+          set -eux
+          # primer ping (puede fallar si está frío)
+          curl -fsS "$GW/aida/health" || true
+          # reintento
+          for i in {1..6}; do
+            sleep 5
+            if curl -fsS "$GW/aida/health" | grep -q '"status":"ok"'; then
+              echo "Gateway OK"
+              exit 0
+            fi
+          done
+          echo "Gateway did not wake"; exit 1
+
+      - name: Test echo/plan on gateway
+        env:
+          GW: https://arkaios-gateway-open.onrender.com
+          INDEX_URL: https://djklmr2025.github.io/builderOS_Lab/index.json
+        run: |
+          set -eux
+          curl -fsS -X POST "$GW/aida/gateway" \
+            -H "Content-Type: application/json" \
+            -d '{"agent_id":"ci","action":"echo","params":{"msg":"CI hello"}}' | tee echo.json
+
+          curl -fsS -X POST "$GW/aida/gateway" \
+            -H "Content-Type: application/json" \
+            -d "{\"agent_id\":\"ci\",\"action\":\"plan\",\"params\":{\"objective\":\"validar index\",\"index\":\"$INDEX_URL\"}}" | tee plan.json
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: arkaios-ci-logs
+          path: |
+            echo.json
+            plan.json
