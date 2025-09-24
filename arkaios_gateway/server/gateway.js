@@ -5,6 +5,8 @@ require('dotenv').config()
 const ALLOWED_HOSTS = (process.env.ALLOWED_HOSTS || 'djklmr2025.github.io,raw.githubusercontent.com,githubusercontent.com,github.io').split(',').map(x=>x.trim().toLowerCase())
 
 const app = express()
+// interactions (Puter<->Copilot)
+require('./interactions').attach(app);
 app.set('trust proxy', true)
 app.use(morgan('tiny'))
 app.use(express.json({ limit: '1mb' }))
