@@ -1,5 +1,8 @@
 # ARKAIOS / BuilderOS
 
+[![ARKAIOS CI](https://github.com/djklmr2025/builderOS_Lab/actions/workflows/arkaios-ci.yml/badge.svg)](https://github.com/djklmr2025/builderOS_Lab/actions/workflows/arkaios-ci.yml)
+
+
 > **Nodo de conocimiento y orquestación para IAs**
 
 Un sistema de gateway inteligente diseñado para que agentes de IA (Claude, Gemini, GPT, etc.) puedan conectarse, explorar el laboratorio y ejecutar planes de manera colaborativa y segura.
