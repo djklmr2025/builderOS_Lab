@@ -1,0 +1,10 @@
+{
+  "package": "arkaios_extras",
+  "version": "1.0.0",
+  "generated": "2025-09-24",
+  "files": [
+    "downloads/extras/HELLO_AGENTS.md",
+    "downloads/extras/AUTH_CHALLENGE.md",
+    "downloads/extras/SAMPLE_CURLS.md"
+  ]
+}
