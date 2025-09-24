@@ -1,0 +1,115 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>ARKAIOS / Puter Console</title>
+<style>
+  body{font-family:system-ui,Segoe UI,Arial,sans-serif;max-width:980px;margin:32px auto;padding:0 16px}
+  h1{margin:0 0 16px}
+  .row{display:flex;gap:8px;margin:8px 0}
+  textarea{width:100%;height:120px}
+  input[type=text]{flex:1;padding:8px}
+  button{padding:8px 12px;cursor:pointer}
+  #out{white-space:pre-wrap;border:1px solid #ddd;border-radius:8px;padding:12px;min-height:160px;margin-top:10px}
+  small{color:#666}
+  .pill{display:inline-block;padding:.2rem .5rem;border-radius:999px;border:1px solid #ddd;margin-left:.5rem}
+</style>
+<h1>ARKAIOS / Puter Console</h1>
+
+<p>Prueba rápida del laboratorio: chat Puter y carga de <code>index.json</code>.</p>
+
+<div class="row">
+  <label>Modelo&nbsp;
+    <select id="model">
+      <option value="gpt-5-nano" selected>gpt-5-nano</option>
+      <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+    </select>
+  </label>
+  <label style="display:flex;align-items:center;gap:6px;">
+    <input type="checkbox" id="stream" checked> Streaming
+  </label>
+  <span id="gwState" class="pill">Gateway: desconocida</span>
+</div>
+
+<textarea id="msg" placeholder="Escribe tu mensaje para Puter..."></textarea>
+
+<div class="row">
+  <button id="send">Enviar ▶</button>
+  <input id="indexUrl" type="text" placeholder="URL de index.json (opcional)">
+  <button id="loadIndex">Cargar índice</button>
+</div>
+
+<details open>
+  <summary><b>Ayuda</b></summary>
+  <div class="row" id="gw-row">
+    <input id="gwUrl" type="text" placeholder="Gateway URL (p. ej., https://arkaios-gateway-open.onrender.com/aida/gateway)">
+    <button id="saveGw">Guardar</button>
+    <button id="gwPing">Ping Gateway (plan)</button>
+  </div>
+  <small>1) Abre primero <code>/aida/health</code> para “despertar” el Render gratuito. 2) Guarda la URL y pulsa Ping.</small>
+</details>
+
+<div id="out"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const out = $('#out');
+const gwUrl = $('#gwUrl');
+const gwState = $('#gwState');
+const indexUrl = $('#indexUrl');
+const msg = $('#msg');
+
+function log(x){ out.textContent = (typeof x==='string')? x : JSON.stringify(x,null,2); }
+
+function setGw(url){
+  if(url){ localStorage.setItem('gw', url); gwUrl.value=url; gwState.textContent='Gateway: '+url; }
+}
+
+(function init(){
+  // 1) query param ?gw=...
+  const q = new URLSearchParams(location.search).get('gw');
+  if(q) setGw(q);
+  // 2) localStorage
+  if(!gwUrl.value){
+    const saved = localStorage.getItem('gw');
+    if(saved) setGw(saved);
+  }
+})();
+
+$('#saveGw').onclick = () => setGw(gwUrl.value.trim());
+
+$('#loadIndex').onclick = async () => {
+  try{
+    const url = indexUrl.value.trim();
+    if(!url) return log('Pon la URL del index.json antes de cargar.');
+    const r = await fetch(url, {mode:'cors'});
+    const j = await r.json();
+    log({ ok:true, entries: Array.isArray(j)? j.length : (j && j.length) || 'n/a', sample: j?.slice?.(0,3) ?? j });
+  }catch(e){ log('Error al leer índice: '+ e.message); }
+};
+
+$('#gwPing').onclick = async () => {
+  try{
+    const url = (gwUrl.value || '').trim();
+    if(!url) return log('Pon la Gateway URL (termina en /aida/gateway).');
+    const r = await fetch(url, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({agent_id:'puter', action:'plan', params:{objective:'ping desde consola'}})
+    });
+    log(await r.json());
+  }catch(e){ log('Ping error: '+ e.message); }
+};
+
+$('#send').onclick = async () => {
+  try{
+    const url = (gwUrl.value || '').trim();
+    if(!url) return log('Pon la Gateway URL (termina en /aida/gateway).');
+    const text = msg.value.trim() || 'Haz un plan para mapear BuilderOS.';
+    const r = await fetch(url, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({agent_id:'puter', action:'plan', params:{objective:text, index:indexUrl.value||null}})
+    });
+    log(await r.json());
+  }catch(e){ log('Send error: '+ e.message); }
+};
+</script>
