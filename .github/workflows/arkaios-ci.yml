@@ -102,3 +102,17 @@ jobs:
           path: |
             echo.json
             plan.json
+      - name: Run symbiosis test (gateway + index)
+        run: |
+          python scripts/symbiosis_test.py | tee symbiosis.out
+
+      - name: Upload artifacts (CI outputs + logs)
+        uses: actions/upload-artifact@v4
+        with:
+          name: arkaios-ci-logs
+          path: |
+            echo.json
+            plan.json
+            symbiosis.out
+            logs/diagnostics.log
+          if-no-files-found: ignore
