@@ -1,0 +1,7 @@
+{
+  "//": "SPKI Base64 (X25519). Rellena con claves PUBLICAS por entidad.",
+  "ARKAIOS": "BASE64_SPKI_X25519_PUBLIC_KEY",
+  "Puter":   "BASE64_SPKI_X25519_PUBLIC_KEY",
+  "Copilot": "BASE64_SPKI_X25519_PUBLIC_KEY",
+  "Gemini":  "BASE64_SPKI_X25519_PUBLIC_KEY"
+}
