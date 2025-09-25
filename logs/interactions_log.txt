@@ -1,3 +1,6 @@
 [2025-09-24T08:21:41.428896+00:00] Puter → validate
 Target: prometeo.py
 Result: Patch applied with visual identity
+[2025-09-25T00:35:36.356331+00:00] ARKAIOS → reawakening
+Target: arkaios.py
+Result: Builder OS reconocido como legado activo
