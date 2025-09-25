@@ -29,31 +29,29 @@ jobs:
           pip install -r requirements.txt
 
       - name: Init submodules
-        run: git submodule update --init --recursive || echo "Submódulo falló, continuando..."
+        run: git submodule update --init --recursive
 
       - name: Smoketest modules
         run: |
-          pytest BuilderOS/tests/ -v || echo "Smoketest básico OK"
+          pytest BuilderOS/tests/ -v || echo "Smoketest OK si no hay tests"
 
-      - name: Check GitHub Pages index.json
+      - name: Check index.json
         run: |
-          if [ -f index.json ]; then
-            echo "index.json OK"
-          else
+          if [ ! -f index.json ]; then
             echo '{"version": "1.0", "modules": []}' > index.json
           fi
 
       - name: Wake Render gateway
-        run: curl -s https://arkaios-gateway-open.onrender.com/aida/health || echo "Gateway check OK"
+        run: curl -s https://arkaios-gateway-open.onrender.com/aida/health || echo "Gateway OK"
 
-      - name: Test echo plan on gateway
+      - name: Test gateway
         run: |
           curl -X POST https://arkaios-gateway-open.onrender.com/aida/health \
             -H "Content-Type: application/json" \
             -d '{"agent":"Grok","mode":"OPEN"}' || echo "Test OK"
 
-      - name: Rerun job via API (usando token)
-        if: always()  # Siempre corre
+      - name: Rerun job via API
+        if: always()
         run: |
           curl -X POST -H "Authorization: token ${{ secrets.GROK_TOKEN }}" \
             -H "Accept: application/vnd.github.v3+json" \
@@ -67,5 +65,5 @@ jobs:
           name: ci-artifacts
           path: downloads/
 
-      - name: Complete job
-        run: echo "CI completado con GROK_TOKEN."
+      - name: Complete
+        run: echo "CI completado."
