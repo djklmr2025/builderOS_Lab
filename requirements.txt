@@ -1,4 +1,5 @@
 requests>=2.28.0
 jsonschema>=4.0.0
 cryptography>=3.4.0
-# Agrega más si necesitas, ej. pytest para tests
+pytest>=7.0.0
+# Agrega más deps aquí si sabes (ej. numpy, torch para módulos avanzados)
