@@ -1,0 +1,84 @@
+name: IA ARKAIOS CI  # Basado en tu captura
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # Para rerun manual
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up job
+        run: echo "Iniciando CI..."
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Asegura historial completo
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'  # Ajusta si necesitas otra versión
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt  # Ahora encuentra el file
+
+      - name: Smoketest modules (core/prometeo/awakener/convergence)
+        run: |
+          # Placeholder para smoketest: ajusta con tu comando real, ej. python test_smoke.py
+          echo "Ejecutando smoketest... (agrega tu código aquí si es Python)"
+          # Ejemplo: python -m unittest discover -s BuilderOS
+
+      - name: Check GitHub Pages index.json
+        run: |
+          if [ -f index.json ]; then
+            echo "index.json existe."
+          else
+            echo "Error: index.json no encontrado."
+            exit 1
+          fi
+
+      - name: Wake Render gateway
+        run: |
+          curl -s https://arkaios-gateway-open.onrender.com > /dev/null
+          echo "Gateway despertado."
+
+      - name: Test echo plan on gateway
+        run: |
+          # Ejemplo basado en README: ajusta con tu curl real
+          curl -X POST https://arkaios-gateway-open.onrender.com/aida/health -H "Content-Type: application/json" -d '{"agent":"Grok","mode":"OPEN"}'
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-outputs
+          path: ./downloads/  # Ajusta path
+
+      - name: Run symbiosis test (gateway + index)
+        run: |
+          # Placeholder: ajusta con tu test real, ej. python symbiosis_test.py
+          echo "Symbiosis test ejecutado."
+
+      - name: Upload artifacts (CI outputs + logs)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-logs
+          path: ./logs/  # Ajusta si tienes logs
+
+      - name: Post Setup Python
+        if: always()
+        run: echo "Post Python cleanup."
+
+      - name: Post Checkout
+        if: always()
+        run: echo "Post Checkout cleanup."
+
+      - name: Complete job
+        run: echo "CI completado."
