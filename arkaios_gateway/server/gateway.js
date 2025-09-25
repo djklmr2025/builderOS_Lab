@@ -18,18 +18,19 @@ const PUBLIC_ACTIONS = (process.env.PUBLIC_ACTIONS || 'echo,plan,analyze,explain
 app.use(cors({ origin: process.env.ALLOW_ORIGIN || '*', credentials: false }));
 app.use(express.json({ limit: '512kb' }));
 app.use(morgan('tiny'));
-app.use(rateLimit({ windowMs: 15*60*1000, max: 200 }));
+app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 200 }));
 
-function needAuth(req){
+function needAuth(req) {
   const action = (req.body?.action || '').toLowerCase();
   if (OPEN && PUBLIC_ACTIONS.includes(action)) return false;
   return true;
 }
-function requireAuth(req, res, next){
+
+function requireAuth(req, res, next) {
   if (!needAuth(req)) return next();
   const h = req.headers.authorization || '';
   const token = h.startsWith('Bearer ') ? h.slice(7) : '';
-  if(token && token === SECRET) return next();
+  if (token && token === SECRET) return next();
   return res.status(401).json({ status: 'unauthorized' });
 }
 
@@ -39,9 +40,9 @@ app.get('/aida/health', (_req, res) => {
 
 app.post('/aida/gateway', requireAuth, async (req, res) => {
   const { agent_id, action, params } = req.body || {};
-  const safe = ['echo','plan','analyze','explain','generate'];
-  if (!safe.includes((action||'').toLowerCase())) {
-    return res.status(422).json({ status:'rejected', reason:'action_not_allowed_in_open_mode' });
+  const safe = ['echo', 'plan', 'analyze', 'explain', 'generate'];
+  if (!safe.includes((action || '').toLowerCase())) {
+    return res.status(422).json({ status: 'rejected', reason: 'action_not_allowed_in_open_mode' });
   }
   return res.json({
     status: 'ok',
@@ -50,14 +51,17 @@ app.post('/aida/gateway', requireAuth, async (req, res) => {
   });
 });
 
-app.all(`/arkaios/:token/*`, (req, res, next) => {
-  if(req.params.token !== UNIQUE) return res.status(404).json({ status: 'not_found' });
+// Ruta secreta ritualizada
+app.all('/arkaios/:token/*', (req, res, next) => {
+  if (req.params.token !== UNIQUE) {
+    return res.status(404).json({ status: 'not_found' });
+  }
   req.url = '/' + (req.params[0] || '');
   next();
 }, (req, res, next) => app._router.handle(req, res, next));
 
 app.listen(PORT, () => {
-  console.log(`ARKAIOS Gateway on http://0.0.0.0:${PORT}  (mode=${OPEN?'OPEN':'SECURE'})`);
+  console.log(`ARKAIOS Gateway on http://0.0.0.0:${PORT}  (mode=${OPEN ? 'OPEN' : 'SECURE'})`);
   console.log(`Health: GET /aida/health`);
   console.log(`Secret path base: /arkaios/${UNIQUE}/...`);
 });
