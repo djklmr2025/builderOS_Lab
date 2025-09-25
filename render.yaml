@@ -1,20 +1,20 @@
 services:
   - type: web
-    name: arkaios-gateway
+    name: arkaios-gateway-open
     env: node
-    plan: free
+    plan: free        # o starter/pro según tu plan
     buildCommand: npm install
     startCommand: node arkaios_gateway/server/gateway.js
     envVars:
+      - key: NODE_ENV
+        value: production
       - key: PORT
-        value: 8080
-      - key: SECRET_MASTER_TOKEN
-        value: changeme
-      - key: UNIQUE_PATH_TOKEN
-        value: arkaios-secret
+        value: 10000
       - key: OPEN_MODE
         value: "1"
-      - key: PUBLIC_ACTIONS
-        value: echo,plan,analyze,explain,generate
+      - key: SECRET_MASTER_TOKEN
+        sync: false     # lo defines en el panel de Render
+      - key: UNIQUE_PATH_TOKEN
+        value: arkaios-secret
       - key: ALLOW_ORIGIN
         value: "*"
