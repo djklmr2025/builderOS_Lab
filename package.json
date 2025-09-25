@@ -1,26 +1,16 @@
 {
-  "dependencies": {
-    "cors": "^2.8.5",
-    "dotenv": "^17.2.2",
-    "express": "^5.1.0",
-    "express-rate-limit": "^8.1.0",
-    "morgan": "^1.10.1",
-    "node-fetch": "^3.3.2"
-  },
-  "name": "builderos_lab",
-  "description": "[![ARKAIOS CI](https://github.com/djklmr2025/builderOS_Lab/actions/workflows/arkaios-ci.yml/badge.svg)](https://github.com/djklmr2025/builderOS_Lab/actions/workflows/arkaios-ci.yml)",
+  "name": "arkaios-gateway",
   "version": "1.0.0",
-  "main": "keygen.js",
-  "directories": {
-    "doc": "docs"
-  },
+  "type": "module",
+  "main": "arkaios_gateway/server/gateway.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node arkaios_gateway/server/gateway.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
-}
-{
-  "type": "module"
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "morgan": "^1.10.0",
+    "dotenv": "^16.3.1",
+    "express-rate-limit": "^6.7.0"
+  }
 }

@@ -1,21 +1,20 @@
-version: 1
-
 services:
   - type: web
-    name: arkaios-gateway-open
+    name: arkaios-gateway
     env: node
     plan: free
-    region: oregon
-    rootDir: arkaios_gateway/server
     buildCommand: npm install
-    startCommand: node gateway.js
-    healthCheckPath: /aida/health
-    autoDeploy: true
-
+    startCommand: node arkaios_gateway/server/gateway.js
     envVars:
-      - key: NODE_VERSION
-        value: "20"
+      - key: PORT
+        value: 8080
+      - key: SECRET_MASTER_TOKEN
+        value: changeme
+      - key: UNIQUE_PATH_TOKEN
+        value: arkaios-secret
       - key: OPEN_MODE
         value: "1"
-      - key: BRIDGE_ALLOW
-        value: "Puter,Copilot,Gemini,ARKAIOS"
+      - key: PUBLIC_ACTIONS
+        value: echo,plan,analyze,explain,generate
+      - key: ALLOW_ORIGIN
+        value: "*"

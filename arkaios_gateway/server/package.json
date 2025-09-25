@@ -1,12 +1,16 @@
 {
   "name": "arkaios-gateway",
   "version": "1.0.0",
-  "main": "gateway.js",
+  "type": "module",
+  "main": "arkaios_gateway/server/gateway.js",
   "scripts": {
-    "start": "node gateway.js"
+    "start": "node arkaios_gateway/server/gateway.js"
   },
   "dependencies": {
     "express": "^4.18.2",
-    "node-fetch": "^3.3.2"
+    "cors": "^2.8.5",
+    "morgan": "^1.10.0",
+    "dotenv": "^16.3.1",
+    "express-rate-limit": "^6.7.0"
   }
 }

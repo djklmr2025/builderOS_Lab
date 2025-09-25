@@ -34,6 +34,11 @@ function requireAuth(req, res, next) {
   return res.status(401).json({ status: 'unauthorized' });
 }
 
+// Ruta raíz para evitar "Cannot GET /"
+app.get('/', (_req, res) => {
+  res.send('🌀 ARKAIOS Gateway está vivo. Usa /aida/health para verificar estado.');
+});
+
 app.get('/aida/health', (_req, res) => {
   res.json({ status: 'ok', mode: OPEN ? 'open' : 'secure', ts: new Date().toISOString() });
 });
