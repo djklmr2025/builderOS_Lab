@@ -7,10 +7,11 @@ services:
     plan: free
     region: oregon
     rootDir: arkaios_gateway/server
-    buildCommand: npm ci
-    startCommand: node gateway.js
+    buildCommand: cd arkaios_gateway/server && npm i
+    startCommand: cd arkaios_gateway/server && node gateway.js
     healthCheckPath: /aida/health
-    autoDeploy: true
+    autoDeploy: true  
+
 
     envVars:
       # Versión de Node usada por Render

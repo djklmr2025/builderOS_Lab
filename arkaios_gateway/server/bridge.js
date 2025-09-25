@@ -1,94 +1,100 @@
-const crypto = require('crypto');
+const express = require('express');
+const crypto  = require('crypto');
+const fs      = require('fs');
+const path    = require('path');
 
-function b64(buf){ return Buffer.from(buf).toString('base64'); }
-function b64d(s){ return Buffer.from(s, 'base64'); }
-function sha256hex(s){ return crypto.createHash('sha256').update(s).digest('hex'); }
-function todayYMD(){ const d=new Date(); return d.toISOString().slice(0,10).replace(/-/g,''); }
-function ymdOffset(off){ const d=new Date(); d.setUTCDate(d.getUTCDate()+off); return d.toISOString().slice(0,10).replace(/-/g,''); }
+const router = express.Router();
+router.use(express.json());
 
-const PHRASE = process.env.PROOF_PHRASE || 'χρῆσθαι φῶς κρυπτόν ἀριθμός: 8412197';
-const ENTITIES = (process.env.BRIDGE_ENTITIES||'ARKAIOS,Puter,Copilot,Gemini')
-  .split(',').map(s=>s.trim()).filter(Boolean);
+// -------- Config --------
+const TTL_MS = Number(process.env.BRIDGE_TTL_MS || 15 * 60 * 1000); // 15 min
+const ALLOW_ENTITIES = (process.env.BRIDGE_ALLOW || 'Puter,Copilot,Gemini,ARKAIOS')
+  .split(',').map(s => s.trim()).filter(Boolean);
 
-// Sesiones en memoria: sid -> { entity, key(Base64), ts }
-const SESS = new Map();
-// Buzones: entity -> [{id, from, to, ts, fragments:[{i,total,data}], meta}]
-const INBOX = new Map();
-for (const e of ENTITIES) INBOX.set(e, []);
+// Memoria
+const sessions = new Map();  // sessionId -> {entity, created, serverPub}
+const queues   = new Map();  // entity    -> [{from,to,payload,ts}]
 
-function verifyProof(entity, proof){
-  // Proof-of-Agent “suave”: sha256(PHRASE:YYYYMMDD) primeros 12 hex
-  const cand = [
-    sha256hex(`${PHRASE}:${todayYMD()}`).slice(0,12),
-    sha256hex(`${PHRASE}:${ymdOffset(-1)}`).slice(0,12), // tolerancia 1 día
-  ];
-  return ENTITIES.includes(entity) && cand.includes((proof||'').toLowerCase());
+function ensureQueue(name) {
+  if (!queues.has(name)) queues.set(name, []);
+  return queues.get(name);
 }
 
-function newSid(){ return (Date.now().toString(36)+Math.random().toString(36).slice(2,10)).toUpperCase(); }
+function isExpired(s) {
+  return (Date.now() - s.created) > TTL_MS;
+}
 
-function splitFragments(ciphB64, size=1024){
-  const buf=b64d(ciphB64);
-  const total=Math.ceil(buf.length/size)||1;
-  const arr=[];
-  for(let i=0;i<total;i++){
-    const chunk = buf.subarray(i*size, (i+1)*size);
-    arr.push({ i, total, data: b64(chunk) });
+function logLine(obj) {
+  try {
+    const line = JSON.stringify({ ts: Date.now(), ...obj }) + '\n';
+    const fp = path.join(process.cwd(), 'logs', 'bridge.jsonl');
+    fs.appendFileSync(fp, line);
+  } catch (e) {
+    // en Render el FS es efímero; igual sirve para depurar
   }
-  return arr;
 }
 
-function attach(app){
-  const base = process.env.SECRET_ROUTE ? `/${process.env.SECRET_ROUTE}/bridge` : '/bridge';
+// ---- Rutas ----
 
-  // === 1) Handshake: devuelve sid + key (32 bytes base64)
-  app.post(`${base}/handshake`, app.json(), (req,res)=>{
-    const { entity, proof } = req.body||{};
-    if(!verifyProof(entity, proof)) return res.status(401).json({ok:false,error:'proof_invalid_or_entity_denied'});
-    const sid = newSid();
-    const key = crypto.randomBytes(32); // session key (Base64)
-    SESS.set(sid, { entity, key: b64(key), ts: Date.now() });
-    return res.json({ ok:true, sid, key: b64(key), entity, expires: Date.now()+3600_000 });
-  });
+// Handshake: crea sesión y devuelve clave pública del servidor (SPKI base64)
+router.post('/handshake', (req, res) => {
+  const { entity, client_pub } = req.body || {};
+  if (!entity || !client_pub) return res.status(400).json({ ok:false, error:'missing_fields' });
+  if (!ALLOW_ENTITIES.includes(entity)) return res.status(403).json({ ok:false, error:'entity_not_allowed' });
 
-  // Middleware sesión
-  function auth(req,res,next){
-    const h=(req.get('authorization')||'').split(' ');
-    if(h[0]!=='Bearer' || !h[1]) return res.status(401).json({ok:false,error:'missing_bearer'});
-    const s = SESS.get(h[1]); if(!s) return res.status(401).json({ok:false,error:'session_not_found_or_expired'});
-    req.session = s; req.sid=h[1]; next();
+  // Par de claves X25519 del servidor (SPKI base64)
+  const { publicKey: srvPub } = crypto.generateKeyPairSync('x25519');
+  const serverPubB64 = srvPub.export({ type:'spki', format:'der' }).toString('base64');
+
+  const session = crypto.randomUUID();
+  sessions.set(session, { entity, created: Date.now(), serverPub: serverPubB64 });
+
+  logLine({ op:'handshake', entity, session });
+  res.json({ ok:true, session, server_pub: serverPubB64, ttl_ms: TTL_MS });
+});
+
+// Enqueue: guarda mensaje dirigido a "to"
+router.post('/enqueue', (req, res) => {
+  const { session } = req.query;
+  const s = sessions.get(session);
+  if (!s || isExpired(s)) return res.status(401).json({ ok:false, error:'invalid_or_expired_session' });
+
+  const { from, to, payload } = req.body || {};
+  if (!from || !to) return res.status(400).json({ ok:false, error:'missing_from_or_to' });
+  if (!ALLOW_ENTITIES.includes(to)) return res.status(403).json({ ok:false, error:'to_not_allowed' });
+
+  const msg = { from, to, payload: payload ?? {}, ts: Date.now() };
+  ensureQueue(to).push(msg);
+
+  logLine({ op:'enqueue', session, from, to });
+  res.json({ ok:true, queued:1 });
+});
+
+// Pull: entrega mensajes nuevos para la entidad de la sesión
+router.get('/pull', (req, res) => {
+  const { session } = req.query;
+  const since = Number(req.query.since || 0);
+  const s = sessions.get(session);
+  if (!s || isExpired(s)) return res.status(401).json({ ok:false, error:'invalid_or_expired_session' });
+
+  const box = ensureQueue(s.entity);
+  const msgs = box.filter(m => m.ts > since);
+
+  logLine({ op:'pull', session, entity:s.entity, count: msgs.length });
+  res.json({ ok:true, now: Date.now(), messages: msgs, next_since: Date.now() });
+});
+
+// Status: conteos y (opcional) sesiones
+router.get('/status', (req, res) => {
+  const include = String(req.query.include_sessions || '0') === '1';
+  const qstats = {};
+  for (const [k, v] of queues.entries()) qstats[k] = v.length;
+
+  const out = { ok:true, sessions: sessions.size, queues:qstats, allow: ALLOW_ENTITIES };
+  if (include) {
+    out.sessions_detail = Array.from(sessions.entries()).map(([id,s]) => ({ id, entity:s.entity, created:s.created }));
   }
+  res.json(out);
+});
 
-  // === 2) Enviar mensaje cifrado a otro entity (server NO descifra)
-  app.post(`${base}/send`, auth, app.json(), (req,res)=>{
-    const { to, ciphertext, meta } = req.body||{};
-    if(!to || !ciphertext) return res.status(400).json({ok:false,error:'missing_to_or_ciphertext'});
-    if(!INBOX.has(to)) return res.status(404).json({ok:false,error:'recipient_unknown'});
-    const frags = splitFragments(ciphertext, 1024);
-    const msg = { id:newSid(), from:req.session.entity, to, ts:Date.now(), fragments:frags, meta:meta||{} };
-    INBOX.get(to).push(msg);
-    // limitar buzón
-    if(INBOX.get(to).length>500) INBOX.get(to).shift();
-    return res.json({ ok:true, id:msg.id, fragments: frags.length });
-  });
-
-  // === 3) Pull: devuelve mensajes desde cierto timestamp (no borra)
-  app.get(`${base}/pull`, auth, (req,res)=>{
-    const since = parseInt(req.query.since||'0',10);
-    const list = (INBOX.get(req.session.entity)||[]).filter(m => m.ts > since).slice(-100);
-    return res.json({ ok:true, items:list, now: Date.now() });
-  });
-
-  // === 4) Cerrar sesión
-  app.post(`${base}/close`, auth, (req,res)=>{
-    SESS.delete(req.sid);
-    return res.json({ ok:true, closed:true });
-  });
-
-  // === 5) Info (debug mínima)
-  app.get(`${base}/info`, (req,res)=>{
-    res.json({ ok:true, entities:ENTITIES, sessions:[...SESS.keys()].length, route:base });
-  });
-}
-
-module.exports = { attach };
+module.exports = router;
