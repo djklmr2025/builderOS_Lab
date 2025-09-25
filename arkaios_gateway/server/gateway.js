@@ -5,6 +5,9 @@ require('dotenv').config()
 const ALLOWED_HOSTS = (process.env.ALLOWED_HOSTS || 'djklmr2025.github.io,raw.githubusercontent.com,githubusercontent.com,github.io').split(',').map(x=>x.trim().toLowerCase())
 
 const app = express()
+// ARKAIOS Bridge (E2E básico)
+require('./bridge').attach(app);
+
 // interactions (Puter<->Copilot)
 require('./interactions').attach(app);
 app.set('trust proxy', true)
