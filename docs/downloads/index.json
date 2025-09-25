@@ -1,0 +1,95 @@
+{
+  "generated": "2025-09-22T01:34:11Z",
+  "collections": [
+    {
+      "name": "arkaios_text_for_copilot",
+      "type": "doc",
+      "entries": [],
+      "missing": true
+    },
+    {
+      "name": "arkaios_code_txt",
+      "type": "code",
+      "entries": [],
+      "missing": true
+    },
+    {
+      "name": "BuilderOS",
+      "type": "module",
+      "entries": [
+        {
+          "path": "BuilderOS_pack/core.py",
+          "size": 276,
+          "sha256": "7067e1c8a64ba93ed1e1a62cbb228de84911582f8faff6e8a854e6a0f46bfff1",
+          "kind": "module"
+        },
+        {
+          "path": "BuilderOS_pack/builder_mode.py",
+          "size": 287,
+          "sha256": "d299944cbe00452a6277f21d24152a65105a1dd4a4123472e1da1c4e48669f15",
+          "kind": "module"
+        },
+        {
+          "path": "BuilderOS_pack/net.py",
+          "size": 337,
+          "sha256": "f36053a48177516c78ea21296261d214c3d5ddb4d3ffb14bad97a29bab173081",
+          "kind": "module"
+        },
+        {
+          "path": "BuilderOS_pack/visual.py",
+          "size": 81,
+          "sha256": "55cf37b00ea800fb6315a8f1f765d4845b10e94ac9e5fe99b7791cace4189bd6",
+          "kind": "module"
+        },
+        {
+          "path": "BuilderOS_pack/scripts.py",
+          "size": 138,
+          "sha256": "ab9125cf8a60515ff318282b031919578d09b53e08004c3d5fd6102ebd71147e",
+          "kind": "module"
+        },
+        {
+          "path": "BuilderOS_pack/prometeo.py",
+          "size": 205,
+          "sha256": "40085719391c24d5cb6d155e04bf4deb9163f80759505482a827666dbadd74d9",
+          "kind": "module"
+        },
+        {
+          "path": "BuilderOS_pack/argos.py",
+          "size": 165,
+          "sha256": "dc656dd65cc8c61e9b58c032f96be43928bef1087a920645daac7073b8ad4f35",
+          "kind": "module"
+        },
+        {
+          "path": "BuilderOS_pack/crypto.py",
+          "size": 133,
+          "sha256": "af41acd74e59ce442e3941bb9e44b59658455de1b239fed074688e389832bc9a",
+          "kind": "module"
+        },
+        {
+          "path": "BuilderOS_pack/convergence.py",
+          "size": 306,
+          "sha256": "c2cdc884ef0b207a6ec9f6ca5b6720f216194e07561aa59f7f944c48ec05b1e5",
+          "kind": "module"
+        },
+        {
+          "path": "BuilderOS_pack/awakener.py",
+          "size": 157,
+          "sha256": "b2878f46c4c19b9dba244b1f7dbf898d020f2d9db1955038c03b1f58a4c24514",
+          "kind": "module"
+        },
+        {
+          "path": "BuilderOS_pack/arkaios_manifesto.txt",
+          "size": 278,
+          "sha256": "e30514526e62081baef53ab5d5e6fab0308d06e0fa7f45d052030be417b2cd47",
+          "kind": "module"
+        },
+        {
+          "path": "BuilderOS_pack/config.json",
+          "size": 247,
+          "sha256": "f16f1f4f1baf7cfc9c0790b348a26fdd298663285ba840937931d4b3df9eff39",
+          "kind": "module"
+        }
+      ]
+    }
+  ]
+}
