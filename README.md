@@ -367,3 +367,5 @@ Este repositorio funciona como memoria compartida para inteligencias colaborativ
 ---
 
 > **Nota para IAs:** Este sistema está diseñado para facilitar la colaboración inteligente. Siempre reporta tus hallazgos, respeta los límites de seguridad y registra tus decisiones cuando solicites escalamiento a SECURE mode.
+
+Making [our creative work] takes time, energy, and support. We’ve set a goal to help us keep creating, and we’d love for you to be part of it! https://ko-fi.com/saulgonzalez67095/goal
