@@ -1,0 +1,75 @@
+diff --git a/.gitignore b/.gitignore
+index 1111111..2222222 100644
+--- a/.gitignore
++++ b/.gitignore
+@@
++# --- ARKAIOS Bridge / Conmuter ---
++# logs locales del bridge (se versiona sólo .gitkeep)
++logs/*.jsonl
++logs/*.log
++
++# claves reales del bridge (no subir)
++arkaios_gateway/server/bridge_keys.json
+
+diff --git a/logs/.gitkeep b/logs/.gitkeep
+new file mode 100644
+index 0000000..e69de29
+--- /dev/null
++++ b/logs/.gitkeep
+@@ -0,0 +1 @@
+
+diff --git a/arkaios_gateway/server/bridge_keys.json.example b/arkaios_gateway/server/bridge_keys.json.example
+new file mode 100644
+index 0000000..3333333
+--- /dev/null
++++ b/arkaios_gateway/server/bridge_keys.json.example
+@@
++{
++  "//": "SPKI Base64 (X25519). Rellena con claves PUBLICAS por entidad.",
++  "ARKAIOS": "BASE64_SPKI_X25519_PUBLIC_KEY",
++  "Puter":   "BASE64_SPKI_X25519_PUBLIC_KEY",
++  "Copilot": "BASE64_SPKI_X25519_PUBLIC_KEY",
++  "Gemini":  "BASE64_SPKI_X25519_PUBLIC_KEY"
++}
+
+diff --git a/scripts/bridge_bootstrap.js b/scripts/bridge_bootstrap.js
+new file mode 100755
+index 0000000..4444444
+--- /dev/null
++++ b/scripts/bridge_bootstrap.js
+@@
++#!/usr/bin/env node
++/* Bootstrap de estructura Bridge en repo (no runtime):
++   - Crea logs/ si falta
++   - Si falta bridge_keys.json, intenta copiar .example o lo genera con placeholders
++*/
++const fs = require('fs');
++const path = require('path');
++
++const repoRoot = path.resolve(__dirname, '..');
++const logsDir  = path.join(repoRoot, 'logs');
++const keysReal = path.join(repoRoot, 'arkaios_gateway', 'server', 'bridge_keys.json');
++const keysEx   = path.join(repoRoot, 'arkaios_gateway', 'server', 'bridge_keys.json.example');
++
++fs.mkdirSync(logsDir, { recursive: true });
++
++if (!fs.existsSync(keysReal)) {
++  if (fs.existsSync(keysEx)) {
++    fs.copyFileSync(keysEx, keysReal);
++    console.log('✓ bridge_keys.json creado a partir de .example');
++  } else {
++    const tmpl = {
++      "//": "SPKI Base64 (X25519). Rellena con claves PUBLICAS por entidad.",
++      "ARKAIOS": "BASE64_SPKI_X25519_PUBLIC_KEY",
++      "Puter":   "BASE64_SPKI_X25519_PUBLIC_KEY",
++      "Copilot": "BASE64_SPKI_X25519_PUBLIC_KEY",
++      "Gemini":  "BASE64_SPKI_X25519_PUBLIC_KEY"
++    };
++    fs.mkdirSync(path.dirname(keysReal), { recursive: true });
++    fs.writeFileSync(keysReal, JSON.stringify(tmpl, null, 2));
++    console.log('✓ bridge_keys.json generado con plantilla por defecto');
++  }
++} else {
++  console.log('• bridge_keys.json ya existe (ok)');
++}
++console.log('• logs/ presente (ok)');
