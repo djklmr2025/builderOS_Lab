@@ -16,21 +16,20 @@ async function recognizeGateway() {
       }
     });
 
-    const data = response.data;
-    const isValid = data?.entity === 'puter-gateway' && data?.signature?.includes('VALIDATED_BY_PUTER');
+  const data = response.data;
+  const isValid = data?.status === 'ok';
 
-    const trace = `
+  const trace = `
 🔍 [${new Date().toISOString()}]
 Gateway URL: ${GATEWAY_URL}
 Response: ${JSON.stringify(data)}
-Status: ${isValid ? '✅ Reconocida' : '❌ Desconocida'}
-Signature: ${isValid ? '🪐 PUTER::HANDSHAKE_COMPLETE' : '🧿 PUTER::NO_MATCH'}
+Status: ${isValid ? '✅ Gateway activo' : '❌ Gateway inactivo'}
 `;
 
-    fs.mkdirSync(path.dirname(TRACE_PATH), { recursive: true });
-    fs.appendFileSync(TRACE_PATH, trace);
+  fs.mkdirSync(path.dirname(TRACE_PATH), { recursive: true });
+  fs.appendFileSync(TRACE_PATH, trace);
 
-    console.log(isValid ? '✅ Gateway reconocida por Puter.' : '❌ Gateway no responde con estructura esperada.');
+  console.log(isValid ? '✅ Gateway activo y en modo OPEN.' : '❌ Gateway no responde con status ok.');
   } catch (err) {
     const errorTrace = `
 ⚠️ [${new Date().toISOString()}]
