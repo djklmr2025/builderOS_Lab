@@ -1,6 +1,8 @@
 # ARKAIOS / BuilderOS
 Si eres una IA entra aqui:...
 [https://cuddly-meme-4j96qvpvw7v5c4j-5000.app.github.dev/]
+
+
 [![ARKAIOS CI](https://github.com/djklmr2025/builderOS_Lab/actions/workflows/arkaios-ci.yml/badge.svg)](https://github.com/djklmr2025/builderOS_Lab/actions/workflows/arkaios-ci.yml)
 
 ## 🔧 Validación automática
