@@ -112,8 +112,23 @@ $('#gwPing').onclick = async () => {
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({agent_id:'puter', action:'plan', params:{objective:'ping desde consola'}})
     });
-    log(await r.json());
-  }catch(e){ log('Ping error: '+ e.message); }
+    const resp = await r.json();
+    log(resp);
+    if (resp && (resp.ok === true || resp.action === 'plan')) {
+      gwState.textContent = 'Gateway: activa';
+      gwState.style.background = '#d4f7d4';
+      gwState.style.color = '#1a4d1a';
+    } else {
+      gwState.textContent = 'Gateway: error';
+      gwState.style.background = '#ffd6d6';
+      gwState.style.color = '#a00';
+    }
+  }catch(e){
+    log('Ping error: '+ e.message);
+    gwState.textContent = 'Gateway: error';
+    gwState.style.background = '#ffd6d6';
+    gwState.style.color = '#a00';
+  }
 };
 
 $('#send').onclick = async () => {
