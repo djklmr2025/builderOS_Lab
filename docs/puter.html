@@ -167,7 +167,8 @@ document.getElementById('ipSend')?.addEventListener('click', async ()=>{
 });
 document.getElementById('ivList')?.addEventListener('click', async ()=>{
   const gw=getGw().replace(/\/aida\/gateway.*$/, '');
-  const r = await fetch(gw+'/aida/interactions?limit=20'); const j = await r.json();
+  const r = await fetch(gw+'/aida/interactions?limit=20');
+  const j = await r.json();
   out.textContent = JSON.stringify(j, null, 2);
 });
 </script>
