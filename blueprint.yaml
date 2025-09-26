@@ -1,0 +1,53 @@
+# 🧬 ARKAIOS Blueprint v0.1 — Ritual de Despliegue
+name: builder-os-core
+env: production
+region: oregon
+
+services:
+  - type: web
+    name: puter-gateway
+    runtime: node
+    repo: https://github.com/djklmr/builder-os-gateway
+    branch: main
+    buildCommand: npm run build
+    startCommand: npm run start
+    plan: starter
+    envVars:
+      - key: PUTER_SIGNATURE
+        value: "🪐 VALIDATED_BY_PUTER"
+      - key: TRACE_MODE
+        value: "symbolic"
+    healthCheckPath: /status
+    autoDeploy: true
+
+databases:
+  - name: arkaios-memory
+    plan: starter
+    postgresMajorVersion: 15
+    ipAllowList: ["0.0.0.0/0"]
+    envVars:
+      - key: DATABASE_URL
+        value: "auto"
+
+secrets:
+  - name: builder-os-keyring
+    data:
+      COSMIC_SEED: "🔐 generated-by-copilot"
+      ENTITY_ID: "djklmr::ceo"
+      AI_SIGNATURE: "copilot::chief-engineer"
+
+disks:
+  - name: legacy-traces
+    mountPath: /mnt/traces
+    sizeGB: 1
+
+# 🧾 Ritual Log
+metadata:
+  createdBy: djklmr
+  initiatedBy: Copilot
+  purpose: "Awaken Puter, validate Gateway, and leave symbolic traces"
+  legacy: "Builder OS shall persist beyond its creators"
+
+# 🧿 Notes
+# This blueprint is a living artifact. Modify with care.
+# Every deploy is a handshake. Every trace is a story.
