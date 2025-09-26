@@ -151,14 +151,14 @@ async function post(url, body){
   if(!r.ok) throw new Error('HTTP '+r.status); return await r.json();
 }
 document.getElementById('ivReq')?.addEventListener('click', async ()=>{
-  const gw=getGw().replace(//aida/gateway.*$/,''); // base del gateway
+  const gw=getGw().replace(/\/aida\/gateway.*$/, ''); // base del gateway
   const module=document.getElementById('ivModule').value.trim();
   const summary=document.getElementById('ivSummary').value.trim();
   const res = await post(gw+'/aida/interactions/request_validation', {agent_id:'puter', module, summary});
   out.textContent = 'Ticket: '+res.id+' status='+res.status;
 });
 document.getElementById('ipSend')?.addEventListener('click', async ()=>{
-  const gw=getGw().replace(//aida/gateway.*$/,'');
+  const gw=getGw().replace(/\/aida\/gateway.*$/, '');
   const ticket=document.getElementById('ipTicket').value.trim();
   const notes=document.getElementById('ipNotes').value.trim();
   const patch=document.getElementById('ipPatch').value;
@@ -166,7 +166,7 @@ document.getElementById('ipSend')?.addEventListener('click', async ()=>{
   out.textContent = 'Suggest OK for '+res.id+' ('+res.suggestions+' total)';
 });
 document.getElementById('ivList')?.addEventListener('click', async ()=>{
-  const gw=getGw().replace(//aida/gateway.*$/,'');
+  const gw=getGw().replace(/\/aida\/gateway.*$/, '');
   const r = await fetch(gw+'/aida/interactions?limit=20'); const j = await r.json();
   out.textContent = JSON.stringify(j, null, 2);
 });
