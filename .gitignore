@@ -27,3 +27,4 @@ server/.env
 # never commit secrets
 arkaios_gateway/server/.env
 *.zip
+*.swp
