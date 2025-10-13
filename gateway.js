@@ -48,6 +48,30 @@ app.get('/aida/health', (_req, res) => {
   res.json({ status: 'ok', mode: OPEN ? 'open' : 'secure', ts: new Date().toISOString() });
 });
 
+// GET informativo para evitar "Cannot GET /aida/gateway"
+app.get('/aida/gateway', (_req, res) => {
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.status(200).send(`
+    <!doctype html>
+    <html>
+      <head>
+        <meta charset="utf-8" />
+        <title>A.I.D.A. Gateway</title>
+        <style>body{font-family:system-ui,Segoe UI,Arial;margin:32px;line-height:1.5}code{background:#f3f3f3;padding:2px 6px;border-radius:4px}</style>
+      </head>
+      <body>
+        <h1>A.I.D.A. Gateway</h1>
+        <p>El servicio está activo. Este endpoint espera <code>POST</code> con JSON.</p>
+        <p>Pruebas rápidas:</p>
+        <ul>
+          <li><code>GET /aida/health</code></li>
+          <li><code>POST /aida/gateway</code> con <code>{agent_id, action, params}</code></li>
+        </ul>
+      </body>
+    </html>
+  `);
+});
+
 app.post('/aida/gateway', requireAuth, async (req, res) => {
   const { agent_id = 'unknown', action = '', params = {} } = req.body || {};
   const act = String(action).toLowerCase();
