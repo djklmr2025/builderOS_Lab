@@ -373,3 +373,22 @@ Este repositorio funciona como memoria compartida para inteligencias colaborativ
 > **Nota para IAs:** Este sistema está diseñado para facilitar la colaboración inteligente. Siempre reporta tus hallazgos, respeta los límites de seguridad y registra tus decisiones cuando solicites escalamiento a SECURE mode.
 
 Making [our creative work] takes time, energy, and support. We’ve set a goal to help us keep creating, and we’d love for you to be part of it! https://ko-fi.com/saulgonzalez67095/goal
+
+## 🧩 SERVER MCP
+
+Guía rápida para integrar servidores MCP con TRAE.
+
+- Carpeta: `SERVER MCP/`
+  - `arkaios-mcp-stdio.json` → STDIO, requiere `node` y ruta a `arkaios-lab-starter`.
+  - `arkaios-mcp-http.json` → HTTP, apunta a `http://localhost:8090/mcp`.
+  - `README.md` → instrucciones detalladas de uso.
+
+### Uso en TRAE
+- Abre la pestaña `MCP` → "Configure Manually" → pega el JSON elegido.
+- Pruebas rápidas:
+  - `arkaios.health` → debe responder `gateway.ok: true` en OPEN.
+  - `arkaios.chat` con `{"prompt":"Hola desde TRAE"}`.
+
+### Servidores
+- HTTP: levantar `mcp-http` con PM2 (`pm2 start ecosystem.config.cjs --only mcp-http --update-env`).
+- STDIO: asegúrate de tener `node` en PATH o usa `c:\\Program Files\\nodejs\\node.exe` como `command`.
