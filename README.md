@@ -392,3 +392,43 @@ Guía rápida para integrar servidores MCP con TRAE.
 ### Servidores
 - HTTP: levantar `mcp-http` con PM2 (`pm2 start ecosystem.config.cjs --only mcp-http --update-env`).
 - STDIO: asegúrate de tener `node` en PATH o usa `c:\\Program Files\\nodejs\\node.exe` como `command`.
+## Conexión MCP (TRAE) — JSON mínimo
+
+Para integrar rápidamente servidores MCP en TRAE, puedes usar estos bloques JSON mínimos en la sección "Configure Manually" de la configuración MCP.
+
+HTTP (cliente MCP via URL):
+
+```json
+{
+  "mcpHttpServers": {
+    "arkaios-mcp-http": {
+      "url": "http://localhost:8090/mcp"
+    }
+  }
+}
+```
+
+STDIO (cliente MCP via proceso local):
+
+```json
+{
+  "mcpServers": {
+    "arkaios-mcp": {
+      "command": "node",
+      "args": ["apps/mcp/server.mjs"],
+      "cwd": "c:\\Users\\djklm\\Desktop\\ARKAIOS\\cosmos-den\\arkaios-lab-starter",
+      "env": {
+        "AIDA_GATEWAY_URL": "https://arkaios-gateway-open.onrender.com/aida/gateway",
+        "AIDA_AUTH_TOKEN": "",
+        "LOCAL_BASE": "http://127.0.0.1:3000"
+      },
+      "autoStart": true
+    }
+  }
+}
+```
+
+Notas rápidas:
+- Los JSON completos y documentación están en `SERVER MCP/` dentro del repo.
+- Asegúrate de que `mcp-http` esté corriendo en `http://localhost:8090/mcp` si usas el bloque HTTP.
+- Para STDIO, verifica que el comando y `cwd` existan en tu entorno local.
