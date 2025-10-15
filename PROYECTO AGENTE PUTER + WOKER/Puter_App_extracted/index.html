@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ArkAIos Memory Panel</title>
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background: #0b0b0d;
+      color: #eee;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      color: #00ffc8;
+      text-shadow: 0 0 8px #00ffc8aa;
+    }
+    section {
+      margin-top: 1em;
+      background: #111;
+      border: 1px solid #333;
+      padding: 1em;
+      border-radius: 12px;
+    }
+    input, button {
+      padding: 8px;
+      margin: 4px;
+      border-radius: 6px;
+      border: none;
+    }
+    input {
+      width: 220px;
+    }
+    button {
+      background: #00ffc8;
+      color: #111;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.2s ease;
+    }
+    button:hover {
+      background: #00bfa5;
+    }
+    pre {
+      background: #222;
+      padding: 8px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body>
+  <h1>⚙️ ArkAIos Memory Control</h1>
+
+  <section>
+    <h2>Conexión</h2>
+    <input id="endpoint" value="https://arkaios-agent-ai-zt5e6g.puter.site/" />
+    <button onclick="ping()">Probar /health</button>
+    <button onclick="keyInfo()">Ver /key-info</button>
+    <button onclick="setLocal()">Usar Local</button>
+    <button onclick="setCloud()">Usar Producción</button>
+  </section>
+
+  <section>
+    <h2>Gestión de memoria</h2>
+    <button onclick="getKeys()">Ver todas las claves</button><br/>
+    <input id="memKey" placeholder="clave (id)" />
+    <input id="memVal" placeholder="valor" />
+    <button onclick="getKey()">Ver valor</button>
+    <button onclick="setKey()">Guardar valor</button>
+  </section>
+
+  <section>
+    <h2>MCP Daemon (simulado)</h2>
+    <div>
+      <button onclick="mcpHealth()">GET /mcp/health</button>
+    </div>
+    <div>
+      <input id="mcpCmd" placeholder="cmd (echo, node, python, pnpm, pip)" />
+      <input id="mcpArgs" placeholder='args (JSON array, ej. ["hola"])' />
+      <button onclick="mcpRun()">POST /mcp/tools/run</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>Salida</h2>
+    <pre id="out">Esperando acción...</pre>
+  </section>
+
+  <script>
+    const out = document.getElementById('out');
+    const base = () => document.getElementById('endpoint').value.replace(/\/$/, '');
+
+    // Detección automática de entorno (local vs producción)
+    (function autoEndpoint(){
+      const input = document.getElementById('endpoint');
+      const isLocalHost = ['localhost', '127.0.0.1'].includes(location.hostname);
+      const isPuterApp = location.hostname.endsWith('.puter.site') || location.href.includes('puter.com/app');
+      const cloud = 'https://arkaios-agent-ai-zt5e6g.puter.site';
+      const local = 'http://127.0.0.1:3000';
+      if (isLocalHost) {
+        input.value = local;
+      } else if (isPuterApp) {
+        input.value = cloud;
+      }
+    })();
+
+    async function api(path, options = {}) {
+      try {
+        const res = await fetch(base() + path, {
+          headers: { "Content-Type": "application/json" },
+          ...options
+        });
+        const data = await res.json();
+        out.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        out.textContent = "❌ Error de conexión: " + err;
+      }
+    }
+
+    async function ping() {
+      await api('/health');
+    }
+
+    async function keyInfo() {
+      await api('/key-info');
+    }
+
+    async function getKeys() {
+      await api('/memory');
+    }
+
+    async function getKey() {
+      const id = document.getElementById('memKey').value;
+      if (!id) return (out.textContent = "Ingrese una clave.");
+      await api('/memory/' + encodeURIComponent(id));
+    }
+
+    async function setKey() {
+      const id = document.getElementById('memKey').value;
+      const value = document.getElementById('memVal').value;
+      if (!id) return (out.textContent = "Ingrese una clave.");
+      await api('/memory', {
+        method: 'POST',
+        body: JSON.stringify({ id, value })
+      });
+    }
+
+    async function mcpHealth(){
+      await api('/mcp/health');
+    }
+
+    async function mcpRun(){
+      const cmd = document.getElementById('mcpCmd').value.trim();
+      const argsText = document.getElementById('mcpArgs').value.trim();
+      let args = [];
+      if(argsText){
+        try { args = JSON.parse(argsText); } catch(e){ return out.textContent = 'Args inválidos: use JSON array'; }
+      }
+      if(!cmd) return (out.textContent = 'Ingrese un cmd permitido');
+      await api('/mcp/tools/run', {
+        method: 'POST',
+        body: JSON.stringify({ cmd, args })
+      });
+    }
+
+    // Selectores de entorno
+    function setLocal(){ document.getElementById('endpoint').value = 'http://127.0.0.1:3000'; }
+    function setCloud(){ document.getElementById('endpoint').value = 'https://arkaios-agent-ai-zt5e6g.puter.site'; }
+  </script>
+</body>
+</html>

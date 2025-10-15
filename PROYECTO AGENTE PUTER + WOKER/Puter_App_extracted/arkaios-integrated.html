@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>ArkAIos Integrado</title>
+  <script src="https://js.puter.com/v2/"></script>
+</head>
+<body>
+  <h1>ArkAIos Memory Manager</h1>
+  <button onclick="loginPuter()">Iniciar sesión en Puter</button>
+  <button onclick="guardar()">Guardar en Worker + Drive</button>
+  <button onclick="leer()">Leer de Worker</button>
+  <button onclick="sincronizar()">Sincronizar con Drive</button>
+  <p id="keyinfo" style="font-family: system-ui; color: #555"></p>
+  <pre id="output"></pre>
+
+  <script>
+    // Ajusta esta URL al dominio de tu Worker publicado
+    const WORKER_URL = "https://arkaios-agent-ai.puter.work"; // ← cámbiala si es necesario
+    const DRIVE_PATH = "/arkaios/Documents/arkaios/memory.json";
+
+    let API_KEY = null;
+
+    function mask(key) {
+      if (!key || key.length < 8) return key || null;
+      return `${key.slice(0, 4)}…${key.slice(-4)}`;
+    }
+
+    async function loginPuter() {
+      try {
+        if (typeof puter !== "undefined" && puter?.auth?.signIn) {
+          await puter.auth.signIn();
+          mostrar({ login: "OK" });
+        } else {
+          mostrar({ login: "SDK no disponible" });
+        }
+      } catch (e) {
+        mostrar({ login_error: e?.message || String(e) });
+      }
+    }
+
+    async function readApiKeyFromDrive() {
+      try {
+        // Requiere estar logueado; si no, fallará en Webview
+        const contenido = await puter.drive.readFile(DRIVE_PATH, "utf-8");
+        const datos = JSON.parse(contenido || "{}");
+        return datos.__api_key || null;
+      } catch (_) {
+        return null;
+      }
+    }
+
+    async function probeKeyInfoFromWorker() {
+      try {
+        const res = await fetch(`${WORKER_URL}/key-info`, { method: "GET" });
+        if (!res || !res.ok) throw new Error(`HTTP ${res?.status || "ERR"}`);
+        const info = await res.json();
+        return info; // { initialized, mask, master_initialized, master_mask, hint }
+      } catch (e) {
+        mostrar({ key_info_error: e?.message || "net::ERR_FAILED" });
+        return null;
+      }
+    }
+
+    async function ensureApiKey() {
+      // 1) Intentar leer la clave desde Drive (si estás logueado)
+      let key = await readApiKeyFromDrive();
+      // 2) Si no existe, disparar la generación en el Worker usando una ruta protegida
+      if (!key) {
+        try {
+          // Esta llamada devolverá 401, pero creará y persistirá __api_key en Drive
+          await fetch(`${WORKER_URL}/memory`, { method: "GET" });
+        } catch (_) {}
+        key = await readApiKeyFromDrive();
+        // 3) Si aún no podemos leerla (por no estar logueados), consulta /key-info
+        if (!key) {
+          const info = await probeKeyInfoFromWorker();
+          const text = info
+            ? `API Key (Worker): ${info.mask || "no inicializada"} | MASTER: ${info.master_mask || "n/a"}`
+            : "No se pudo consultar /key-info (abre en navegador externo)";
+          document.getElementById("keyinfo").textContent = text + " — inicia sesión en Puter y pulsa 'Sincronizar con Drive'";
+      }
+      }
+      API_KEY = key;
+      const info = key ? `API Key inicializada: ${mask(key)}` : "API Key no disponible";
+      document.getElementById("keyinfo").textContent = info;
+      return key;
+    }
+
+    function headersWithKey() {
+      const h = { "Content-Type": "application/json" };
+      if (API_KEY) h["X-API-Key"] = API_KEY;
+      return h;
+    }
+
+    async function guardar() {
+      const data = { nombre: "DJ", rol: "admin", ts: Date.now() };
+      await ensureApiKey();
+
+      // 1. Guardar en el Worker (protegido por X-API-Key)
+      try {
+        const resp = await fetch(`${WORKER_URL}/memory/usuario1`, {
+          method: "POST",
+          headers: headersWithKey(),
+          body: JSON.stringify(data),
+        });
+        const rjson = await resp.json().catch(() => ({}));
+        mostrar({ post_worker: rjson });
+      } catch (e) {
+        mostrar({ error: "POST al Worker bloqueado", details: e.message });
+        return;
+      }
+
+      // 2. Guardar en Drive (persistente)
+      try {
+        await ensureAuth();
+        const contenido = await puter.drive.readFile(DRIVE_PATH, "utf-8").catch(() => "{}");
+        const datos = JSON.parse(contenido || "{}");
+        datos.usuario1 = data;
+        await puter.drive.writeFile(DRIVE_PATH, JSON.stringify(datos, null, 2), "utf-8");
+        mostrar({ drive_write: "OK" });
+      } catch (e) {
+        mostrar({ error: "No se pudo escribir en Drive", details: e.message });
+      }
+    }
+
+    async function leer() {
+      await ensureApiKey();
+      const res = await fetch(`${WORKER_URL}/health`).catch(() => null);
+      const health = res ? await res.json().catch(() => ({ status: "unknown" })) : { status: "offline" };
+      const resMem = await fetch(`${WORKER_URL}/memory/usuario1`, { headers: headersWithKey() }).catch(() => null);
+      const json = resMem ? await resMem.json().catch(() => ({ error: "sin respuesta" })) : { error: "sin respuesta" };
+      mostrar({ health, memory: json });
+    }
+
+    async function sincronizar() {
+      try {
+        await ensureAuth();
+        const contenido = await puter.drive.readFile(DRIVE_PATH, "utf-8");
+        const datos = JSON.parse(contenido || "{}");
+        mostrar({ sync: datos });
+      } catch (e) {
+        mostrar({ error: "No se pudo leer memoria persistente", details: e.message });
+      }
+    }
+
+    function mostrar(msg) {
+      document.getElementById("output").textContent = JSON.stringify(msg, null, 2);
+    }
+
+    // Inicializar mostrando estado del API key
+    ensureApiKey();
+  </script>
+</body>
+</html>
