@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BuilderOS Lab · Gateway Safe UI</title>
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; background:#0f172a; color:#e2e8f0; margin:0; padding:24px; }
+    h1 { font-size: 18px; margin: 0 0 12px; }
+    .row { display:flex; gap:16px; align-items:center; }
+    button { background:#0ea5e9; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; }
+    button:disabled { opacity: .6; cursor: not-allowed; }
+    input[type=text] { width: 480px; padding:8px; border-radius:6px; border:1px solid #334155; background:#0b1220; color:#e2e8f0; }
+    pre { background:#0b1220; border:1px solid #334155; padding:12px; border-radius:8px; overflow:auto; max-height:50vh; }
+    small { color:#94a3b8; }
+  </style>
+</head>
+<body>
+  <h1>A.I.D.A. Gateway · Safe Client</h1>
+  <div class="row" style="margin-bottom:12px">
+    <label>GW URL</label>
+    <input id="gwUrl" type="text" />
+  </div>
+  <div class="row" style="margin-bottom:12px">
+    <label>Token (opcional)</label>
+    <input id="token" type="text" />
+  </div>
+  <div class="row" style="margin-bottom:12px">
+    <button id="btnPlan">Crear Plan</button>
+    <button id="btnReadIndex">Leer Índice</button>
+    <small id="status"></small>
+  </div>
+  <pre id="output"></pre>
+
+  <!-- Parche global JSON seguro -->
+  <script src="lib/bootstrap.js"></script>
+  <!-- Utilidades HTTP + Gateway -->
+  <script src="lib/http.js"></script>
+  <script>
+    const $ = (sel) => document.querySelector(sel);
+    function setDefaultsFromQuery() {
+      const params = new URLSearchParams(location.search);
+      const gw = params.get('gw') || AkHttp.GW_URL || 'https://arkaios-gateway-open.onrender.com/aida/gateway';
+      const tk = params.get('token') || '';
+      $('#gwUrl').value = gw;
+      $('#token').value = tk;
+    }
+
+    async function run(action, params) {
+      try {
+        $('#status').textContent = 'Ejecutando ' + action + '...';
+        const gw = $('#gwUrl').value.trim();
+        const tk = $('#token').value.trim();
+        const body = { agent_id: 'puter', action, params };
+        const init = AkHttp.jsonPost(body);
+        init.headers = init.headers || {};
+        if (tk) init.headers['Authorization'] = 'Bearer ' + tk;
+        const data = await AkHttp.request(gw, init);
+        $('#output').textContent = JSON.stringify(data, null, 2);
+        $('#status').textContent = 'OK';
+      } catch (e) {
+        $('#output').textContent = 'Error: ' + (e.message || String(e));
+        $('#status').textContent = 'Error';
+      }
+    }
+
+    $('#btnPlan').addEventListener('click', () => run('plan', { objective: 'mapear BuilderOS' }));
+    $('#btnReadIndex').addEventListener('click', () => run('read', { target: 'https://djklmr2025.github.io/builderOS_Lab/index.json' }));
+
+    setDefaultsFromQuery();
+  </script>
+</body>
+</html>
