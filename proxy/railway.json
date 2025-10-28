@@ -1,16 +1,5 @@
 {
   "build": {
-    "builder": "NIXPACKS",
-    "nixpacksPlan": {
-      "phases": {
-        "install": {
-          "nixPkgs": ["nodejs_18"],
-          "cmds": ["npm install"]
-        },
-        "start": {
-          "cmd": ["npm start"]
-        }
-      }
-    }
+    "builder": "DOCKERFILE"
   }
 }
